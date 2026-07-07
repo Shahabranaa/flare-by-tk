@@ -1,6 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const { id } = await params;
+    if (!UUID_RE.test(id)) {
+      return NextResponse.json({ error: 'Invalid token' }, { status: 400 });
+    }
+    const [row] = await sql(`
+      SELECT id, tracking_token AS "trackingToken", order_type AS "orderType",
+             status, total_amount::float AS "totalAmount",
+             items, created_at AS "createdAt", special_instructions AS "specialInstructions"
+      FROM orders WHERE tracking_token = $1
+    `, [id]);
+    if (!row) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+    return NextResponse.json(row);
+  } catch (e) {
+    console.error(e);
+    return NextResponse.json({ error: 'Failed' }, { status: 500 });
+  }
+}
+
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const cookie = req.cookies.get('admin-session');
   if (cookie?.value !== process.env.ADMIN_PASSWORD) {

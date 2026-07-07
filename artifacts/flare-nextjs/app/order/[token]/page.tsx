@@ -26,7 +26,7 @@ export default function OrderPage({ params }: { params: Promise<{ token: string 
 
   const fetchOrder = useCallback(async () => {
     try {
-      const res = await fetch(`/api/orders/track/${token}`);
+      const res = await fetch(`/api/orders/${token}`);
       if (!res.ok) { setError('Order not found'); return; }
       setOrder(await res.json());
     } catch { setError('Failed to load order'); }

@@ -9,9 +9,9 @@
   "/api/orders/track/[token]/route": "app/api/orders/track/[token]/route.js",
   "/cart/page": "app/cart/page.js",
   "/menu/page": "app/menu/page.js",
-  "/page": "app/page.js",
   "/order/[token]/page": "app/order/[token]/page.js",
-  "/about/page": "app/about/page.js",
+  "/page": "app/page.js",
+  "/admin/page": "app/admin/page.js",
   "/deals/page": "app/deals/page.js",
-  "/admin/page": "app/admin/page.js"
+  "/about/page": "app/about/page.js"
 }

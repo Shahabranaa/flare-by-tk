@@ -9,9 +9,9 @@
   "/api/orders/track/[token]/route": "/api/orders/track/[token]",
   "/cart/page": "/cart",
   "/menu/page": "/menu",
-  "/page": "/",
   "/order/[token]/page": "/order/[token]",
-  "/about/page": "/about",
+  "/page": "/",
+  "/admin/page": "/admin",
   "/deals/page": "/deals",
-  "/admin/page": "/admin"
+  "/about/page": "/about"
 }
