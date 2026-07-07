@@ -1,5 +1,5 @@
 {
-  "buildCommand": "pnpm install && pnpm --filter @workspace/flare-restaurant run build",
+  "buildCommand": "pnpm install && pnpm --filter @workspace/api-server run build:handler && pnpm --filter @workspace/flare-restaurant run build",
   "outputDirectory": "artifacts/flare-restaurant/dist/public",
   "framework": null,
   "rewrites": [
