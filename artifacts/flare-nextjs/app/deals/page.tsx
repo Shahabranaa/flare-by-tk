@@ -4,7 +4,7 @@ import Image from 'next/image';
 import { Flame, Tag } from 'lucide-react';
 
 export const metadata: Metadata = { title: 'Deals — Flare by TK' };
-export const revalidate = 60;
+export const dynamic = 'force-dynamic';
 
 interface Deal {
   id: number; title: string; description: string | null; imageUrl: string | null;
