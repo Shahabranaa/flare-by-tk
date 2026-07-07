@@ -13,9 +13,8 @@ export function FloatingCart() {
 
   const hidden =
     location.startsWith("/cart") ||
-    location.startsWith("/checkout") ||
     location.startsWith("/admin") ||
-    location.startsWith("/order-tracking");
+    location.startsWith("/order/");
 
   if (hidden || count === 0) return null;
 
@@ -31,9 +30,9 @@ export function FloatingCart() {
 
       {/* Drawer */}
       {open && (
-        <div className="fixed bottom-0 inset-x-0 z-50 sm:inset-x-auto sm:right-5 sm:bottom-20 sm:w-96 bg-card border border-border rounded-t-3xl sm:rounded-2xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom-4 duration-300">
+        <div className="fixed bottom-0 inset-x-0 z-50 sm:inset-x-auto sm:right-5 sm:bottom-20 sm:w-96 bg-card border border-border rounded-t-3xl sm:rounded-2xl shadow-2xl flex flex-col max-h-[90dvh] sm:max-h-[80vh] animate-in slide-in-from-bottom-4 duration-300">
           {/* Header */}
-          <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+          <div className="flex items-center justify-between px-5 py-4 border-b border-border shrink-0">
             <div className="flex items-center gap-2">
               <ShoppingBag className="h-5 w-5 text-primary" />
               <span className="font-heading font-bold text-base">Your Cart</span>
@@ -50,7 +49,7 @@ export function FloatingCart() {
           </div>
 
           {/* Items */}
-          <div className="max-h-72 overflow-y-auto divide-y divide-border">
+          <div className="flex-1 overflow-y-auto divide-y divide-border min-h-0">
             {items.map((item) => (
               <div key={item.menuItemId} className="flex items-center gap-3 px-5 py-3">
                 {item.imageUrl && (
@@ -99,7 +98,7 @@ export function FloatingCart() {
               <span>Total</span>
               <span>Rs. {(total + 150).toLocaleString()}</span>
             </div>
-            <Link href="/checkout" onClick={() => setOpen(false)}>
+            <Link href="/cart" onClick={() => setOpen(false)}>
               <Button className="w-full rounded-xl h-12 font-bold text-base gap-2">
                 Proceed to Checkout <ArrowRight className="h-4 w-4" />
               </Button>

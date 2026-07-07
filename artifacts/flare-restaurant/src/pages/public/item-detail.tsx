@@ -50,12 +50,12 @@ export function ItemDetail() {
   ).slice(0, 3);
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <Link href="/menu" className="inline-flex items-center text-sm font-medium text-muted-foreground hover:text-primary mb-8 transition-colors">
+    <div className="container mx-auto px-4 py-6 md:py-8 pb-28">
+      <Link href="/" className="inline-flex items-center text-sm font-medium text-muted-foreground hover:text-primary mb-6 transition-colors">
         <ArrowLeft className="mr-2 h-4 w-4" /> Back to Menu
       </Link>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start mb-20">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12 items-start mb-16">
         <div className="rounded-3xl overflow-hidden bg-muted aspect-square max-h-[600px] shadow-xl">
           <img 
             src={item.imageUrl || "/placeholder.png"} 
@@ -138,7 +138,7 @@ export function ItemDetail() {
       {relatedItems && relatedItems.length > 0 && (
         <div>
           <h3 className="text-2xl font-heading font-bold mb-8">You might also like</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-6">
             {relatedItems.map(related => (
               <Link key={related.id} href={`/menu/${related.slug}`}>
                 <div className="group cursor-pointer flex items-center gap-4 bg-card p-3 rounded-2xl border border-border hover:border-primary/50 transition-colors">

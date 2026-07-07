@@ -116,11 +116,11 @@ export function Cart() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-12 max-w-6xl">
-      <h1 className="text-4xl font-heading font-black mb-8">Checkout</h1>
+    <div className="container mx-auto px-4 py-8 md:py-12 max-w-6xl">
+      <h1 className="text-3xl md:text-4xl font-heading font-black mb-6 md:mb-8">Checkout</h1>
       
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
-        <div className="lg:col-span-7">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-12">
+        <div className="lg:col-span-7 order-2 lg:order-1">
           <div className="bg-card rounded-3xl border shadow-sm p-6 md:p-8">
             <h2 className="text-2xl font-heading font-bold mb-6">Order Details</h2>
             
@@ -240,14 +240,14 @@ export function Cart() {
           </div>
         </div>
 
-        <div className="lg:col-span-5">
-          <div className="bg-card rounded-3xl border shadow-sm p-6 md:p-8 sticky top-24">
+        <div className="lg:col-span-5 order-1 lg:order-2">
+          <div className="bg-card rounded-3xl border shadow-sm p-6 md:p-8 lg:sticky lg:top-24">
             <div className="flex items-center justify-between mb-6 border-b pb-4">
               <h2 className="text-2xl font-heading font-bold">Your Order</h2>
               <span className="bg-secondary px-3 py-1 rounded-full text-sm font-bold text-muted-foreground">{items.length} items</span>
             </div>
             
-            <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 mb-6">
+            <div className="space-y-4 max-h-56 lg:max-h-[400px] overflow-y-auto pr-2 mb-6">
               {items.map((item) => (
                 <div key={item.menuItemId} className="flex gap-4 group">
                   <div className="w-20 h-20 rounded-xl overflow-hidden bg-muted shrink-0">
@@ -259,7 +259,7 @@ export function Cart() {
                       <Button 
                         variant="ghost" 
                         size="icon" 
-                        className="h-6 w-6 text-muted-foreground hover:text-destructive shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="h-6 w-6 text-muted-foreground hover:text-destructive shrink-0 transition-colors"
                         onClick={() => removeFromCart(item.menuItemId)}
                       >
                         <Trash2 className="h-4 w-4" />

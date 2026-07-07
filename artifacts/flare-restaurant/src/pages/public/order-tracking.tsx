@@ -128,14 +128,14 @@ export function OrderTracking() {
                   const isCurrent = currentStep === step.num;
                   return (
                     <div key={step.num} className="flex flex-col items-center">
-                      <div className={`w-12 h-12 rounded-full flex items-center justify-center transition-colors duration-300 ${
+                      <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center transition-colors duration-300 ${
                         isActive
                           ? "bg-primary text-primary-foreground shadow-lg shadow-primary/30"
                           : "bg-secondary text-muted-foreground border-2 border-background"
                       } ${isCurrent ? "ring-4 ring-primary/20" : ""}`}>
-                        <Icon className="h-5 w-5" />
+                        <Icon className="h-4 w-4 sm:h-5 sm:w-5" />
                       </div>
-                      <span className={`mt-3 text-sm font-bold ${isActive ? "text-foreground" : "text-muted-foreground"}`}>
+                      <span className={`mt-2 text-[10px] sm:text-sm font-bold text-center leading-tight ${isActive ? "text-foreground" : "text-muted-foreground"}`}>
                         {step.label}
                       </span>
                     </div>

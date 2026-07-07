@@ -263,15 +263,15 @@ export function Home() {
             </div>
 
             {/* Quick stats */}
-            <div className="flex items-center gap-5 mt-12 text-sm text-white/40">
+            <div className="flex flex-wrap items-center gap-x-5 gap-y-2 mt-12 text-sm text-white/40">
               <div>
                 <span className="text-white font-bold">68+</span> menu items
               </div>
-              <div className="h-3 w-px bg-white/15" />
+              <div className="h-3 w-px bg-white/15 hidden sm:block" />
               <div>
                 <span className="text-white font-bold">Rs. 150</span> delivery
               </div>
-              <div className="h-3 w-px bg-white/15" />
+              <div className="h-3 w-px bg-white/15 hidden sm:block" />
               <div>Cash on delivery</div>
             </div>
           </div>

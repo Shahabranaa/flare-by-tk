@@ -32,22 +32,22 @@ export function Deals() {
                     {deal.discountType === 'fixed' && `Rs. ${deal.discountValue} OFF`}
                     {deal.discountType === 'combo' && 'COMBO DEAL'}
                   </div>
-                  <h3 className="text-3xl font-heading font-bold text-white drop-shadow-md">{deal.title}</h3>
+                  <h3 className="text-xl sm:text-3xl font-heading font-bold text-white drop-shadow-md">{deal.title}</h3>
                 </div>
               </div>
-              <div className="p-6 md:p-8 flex flex-col md:flex-row gap-6 items-center justify-between">
-                <p className="text-muted-foreground flex-1">
+              <div className="p-5 md:p-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <p className="text-muted-foreground flex-1 text-sm sm:text-base">
                   {deal.description}
                 </p>
-                <div className="flex flex-col items-center md:items-end shrink-0">
-                  <div className="flex items-baseline gap-2 mb-2">
+                <div className="flex flex-row sm:flex-col items-center sm:items-end justify-between sm:justify-start shrink-0 gap-3">
+                  <div className="flex items-baseline gap-2">
                     {deal.originalPrice && (
-                      <span className="text-muted-foreground line-through text-lg">Rs. {deal.originalPrice}</span>
+                      <span className="text-muted-foreground line-through text-base">Rs. {deal.originalPrice}</span>
                     )}
-                    <span className="text-3xl font-black text-primary">Rs. {deal.dealPrice}</span>
+                    <span className="text-2xl sm:text-3xl font-black text-primary">Rs. {deal.dealPrice}</span>
                   </div>
-                  <Link href="/menu">
-                    <Button size="lg" className="rounded-full font-bold px-8">Order Now</Button>
+                  <Link href="/">
+                    <Button size="default" className="rounded-full font-bold px-6">Order Now</Button>
                   </Link>
                 </div>
               </div>
