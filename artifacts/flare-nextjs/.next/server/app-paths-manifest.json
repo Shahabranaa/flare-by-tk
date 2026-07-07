@@ -1,3 +1,6 @@
 {
-  "/api/setup/route": "app/api/setup/route.js"
+  "/api/deals/route": "app/api/deals/route.js",
+  "/api/categories/route": "app/api/categories/route.js",
+  "/api/menu-items/route": "app/api/menu-items/route.js",
+  "/page": "app/page.js"
 }
