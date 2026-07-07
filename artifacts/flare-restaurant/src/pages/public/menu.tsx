@@ -1,191 +1,314 @@
-import { useState, useMemo, useEffect } from "react";
-import { Link, useSearch } from "wouter";
-import { Plus, Search } from "lucide-react";
-import { useListCategories, useListMenuItems } from "@workspace/api-client-react";
+import { useState, useEffect, useRef } from "react";
+import { Link } from "wouter";
+import { Plus, Flame, Tag } from "lucide-react";
+import { useListCategories, useListMenuItems, useListDeals } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { useCart } from "@/lib/cart";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 
+const SEC_MOST_SELLING = "most-selling";
+const SEC_DEALS = "deals";
+
+/* ── Sub-components ────────────────────────────────────────────────────── */
+
+function SectionHeader({
+  title,
+  subtitle,
+  icon,
+}: {
+  title: string;
+  subtitle?: string;
+  icon?: React.ReactNode;
+}) {
+  return (
+    <div className="mb-5">
+      <div className="flex items-center gap-2">
+        {icon}
+        <h2 className="text-xl font-heading font-black tracking-tight">{title}</h2>
+      </div>
+      {subtitle && <p className="text-sm text-muted-foreground mt-0.5 ml-7">{subtitle}</p>}
+    </div>
+  );
+}
+
+function ItemCard({
+  item,
+  onAdd,
+}: {
+  item: any;
+  onAdd: (e: React.MouseEvent, item: any) => void;
+}) {
+  return (
+    <Link href={`/menu/${item.slug}`}>
+      <div className="group flex bg-card border border-border rounded-2xl overflow-hidden hover:shadow-lg hover:border-primary/25 transition-all duration-200 cursor-pointer h-[108px]">
+        {/* Left: text */}
+        <div className="flex-1 p-3 flex flex-col justify-between min-w-0">
+          <div>
+            <div className="flex items-start gap-1.5 mb-1">
+              {item.isFeatured && (
+                <span className="mt-0.5 shrink-0 text-[9px] font-bold bg-primary/10 text-primary px-1.5 py-0.5 rounded-sm uppercase tracking-wide">
+                  Hot
+                </span>
+              )}
+              <h3 className="font-heading font-bold text-[13px] leading-snug group-hover:text-primary transition-colors line-clamp-2">
+                {item.name}
+              </h3>
+            </div>
+            <p className="text-[11px] text-muted-foreground line-clamp-2 leading-relaxed">
+              {item.description}
+            </p>
+          </div>
+          <div className="flex items-center justify-between mt-1">
+            <div className="flex items-baseline gap-1.5">
+              <span className="font-black text-sm">Rs. {item.price}</span>
+              {item.originalPrice && (
+                <span className="text-[10px] text-muted-foreground line-through">
+                  Rs. {item.originalPrice}
+                </span>
+              )}
+            </div>
+            <Button
+              size="icon"
+              className="rounded-full h-7 w-7 shrink-0"
+              onClick={(e) => onAdd(e, item)}
+            >
+              <Plus className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+        </div>
+        {/* Right: image */}
+        <div className="w-[108px] shrink-0 bg-muted self-stretch">
+          <img
+            src={item.imageUrl || "/placeholder.png"}
+            alt={item.name}
+            className="w-full h-full object-cover"
+          />
+        </div>
+      </div>
+    </Link>
+  );
+}
+
+function DealCard({ deal }: { deal: any }) {
+  return (
+    <Link href="/deals">
+      <div className="group flex bg-card border border-border rounded-2xl overflow-hidden hover:shadow-lg hover:border-primary/25 transition-all duration-200 cursor-pointer h-[108px]">
+        <div className="flex-1 p-3 flex flex-col justify-between min-w-0">
+          <div>
+            <div className="flex items-start gap-1.5 mb-1">
+              <span className="mt-0.5 shrink-0 text-[9px] font-bold bg-emerald-500/10 text-emerald-600 px-1.5 py-0.5 rounded-sm uppercase tracking-wide">
+                Combo
+              </span>
+              <h3 className="font-heading font-bold text-[13px] leading-snug group-hover:text-primary transition-colors line-clamp-2">
+                {deal.title}
+              </h3>
+            </div>
+            <p className="text-[11px] text-muted-foreground line-clamp-2 leading-relaxed">
+              {deal.description}
+            </p>
+          </div>
+          <div className="flex items-center gap-2 mt-1">
+            <span className="font-black text-sm text-primary">Rs. {deal.dealPrice}</span>
+            {deal.originalPrice && (
+              <span className="text-[10px] text-muted-foreground line-through">
+                Rs. {deal.originalPrice}
+              </span>
+            )}
+          </div>
+        </div>
+        <div className="w-[108px] shrink-0 bg-muted self-stretch">
+          <img
+            src={deal.imageUrl || "/deal-combo.png"}
+            alt={deal.title}
+            className="w-full h-full object-cover"
+          />
+        </div>
+      </div>
+    </Link>
+  );
+}
+
+/* ── Main page ─────────────────────────────────────────────────────────── */
+
 export function Menu() {
-  const search = useSearch();
-  const params = new URLSearchParams(search);
-  const categorySlugFromUrl = params.get("category");
-
-  const [activeCategoryId, setActiveCategoryId] = useState<number | null>(null);
-  const [searchQuery, setSearchQuery] = useState("");
-
-  const { data: categories, isLoading: categoriesLoading } = useListCategories();
+  const [activeSection, setActiveSection] = useState(SEC_MOST_SELLING);
+  const { data: categories, isLoading: catsLoading } = useListCategories();
   const { data: menuItems, isLoading: itemsLoading } = useListMenuItems({ available: true });
-
+  const { data: deals } = useListDeals({ active: true });
   const { addToCart } = useCart();
   const { toast } = useToast();
 
-  useEffect(() => {
-    if (categorySlugFromUrl && categories) {
-      const match = categories.find((c) => c.slug === categorySlugFromUrl);
-      if (match) setActiveCategoryId(match.id);
-    }
-  }, [categorySlugFromUrl, categories]);
-
-  const filteredItems = useMemo(() => {
-    if (!menuItems) return [];
-    return menuItems.filter((item) => {
-      const matchesCategory = activeCategoryId === null || item.categoryId === activeCategoryId;
-      const matchesSearch =
-        item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (item.description && item.description.toLowerCase().includes(searchQuery.toLowerCase()));
-      return matchesCategory && matchesSearch;
-    });
-  }, [menuItems, activeCategoryId, searchQuery]);
+  const sectionEls = useRef<Map<string, HTMLElement>>(new Map());
+  const navRef = useRef<HTMLDivElement>(null);
+  const programmaticScroll = useRef(false);
 
   const handleAddToCart = (e: React.MouseEvent, item: any) => {
     e.preventDefault();
     e.stopPropagation();
-    addToCart({
-      menuItemId: item.id,
-      name: item.name,
-      price: item.price,
-      quantity: 1,
-      imageUrl: item.imageUrl,
-    });
-    toast({
-      title: "Added to Cart",
-      description: `${item.name} has been added to your cart.`,
-    });
+    addToCart({ menuItemId: item.id, name: item.name, price: item.price, quantity: 1, imageUrl: item.imageUrl });
+    toast({ title: "Added to Cart", description: `${item.name} added.` });
   };
 
+  /* Scroll page to section */
+  const goToSection = (id: string) => {
+    const el = sectionEls.current.get(id);
+    if (!el) return;
+    programmaticScroll.current = true;
+    setActiveSection(id);
+    const y = el.getBoundingClientRect().top + window.scrollY - 120;
+    window.scrollTo({ top: Math.max(0, y), behavior: "smooth" });
+    setTimeout(() => { programmaticScroll.current = false; }, 900);
+  };
+
+  /* Keep active tab centred in nav strip */
+  useEffect(() => {
+    const nav = navRef.current;
+    const tab = nav?.querySelector(`[data-id="${activeSection}"]`) as HTMLElement | null;
+    if (tab && nav) {
+      nav.scrollTo({ left: tab.offsetLeft - nav.offsetWidth / 2 + tab.offsetWidth / 2, behavior: "smooth" });
+    }
+  }, [activeSection]);
+
+  /* Scroll-spy via IntersectionObserver */
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (programmaticScroll.current) return;
+        const visible = entries
+          .filter((e) => e.isIntersecting)
+          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+        if (visible[0]) setActiveSection(visible[0].target.id);
+      },
+      { rootMargin: "-80px 0px -55% 0px", threshold: 0 },
+    );
+    sectionEls.current.forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
+  }, [categories, menuItems, deals]);
+
+  const featuredItems = menuItems?.filter((i) => i.isFeatured) ?? [];
+  const activeCategories = categories?.filter((c) => c.isActive) ?? [];
+  const hasDeals = !!deals?.length;
+  const isLoading = itemsLoading || catsLoading;
+
+  const navTabs = [
+    { id: SEC_MOST_SELLING, label: "🔥 Most Selling" },
+    ...(hasDeals ? [{ id: SEC_DEALS, label: "🏷️ Deals" }] : []),
+    ...activeCategories.map((c) => ({ id: `cat-${c.id}`, label: c.name })),
+  ];
+
   return (
-    <div className="container mx-auto px-4 py-12">
-      <div className="text-center max-w-2xl mx-auto mb-12">
-        <h1 className="text-4xl md:text-5xl font-heading font-black mb-4">Our Menu</h1>
-        <p className="text-muted-foreground text-lg">
-          Fire-grilled perfection. Choose from our premium selection of authentic Pakistani
-          delicacies.
-        </p>
+    <div className="min-h-screen pb-24">
+      {/* ── Sticky category nav ──────────────────────────────────────── */}
+      <div className="sticky top-16 z-20 bg-background/95 backdrop-blur-sm border-b border-border shadow-sm">
+        <div
+          ref={navRef}
+          className="flex gap-1.5 px-4 py-2.5 overflow-x-auto"
+          style={{ scrollbarWidth: "none" }}
+        >
+          {isLoading
+            ? Array.from({ length: 6 }).map((_, i) => (
+                <Skeleton key={i} className="h-8 w-24 rounded-full shrink-0" />
+              ))
+            : navTabs.map(({ id, label }) => (
+                <button
+                  key={id}
+                  data-id={id}
+                  onClick={() => goToSection(id)}
+                  className={`whitespace-nowrap px-3.5 py-1.5 rounded-full text-sm font-medium transition-all shrink-0 ${
+                    activeSection === id
+                      ? "bg-primary text-primary-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+        </div>
       </div>
 
-      <div className="flex flex-col md:flex-row gap-8 mb-8 items-start md:items-center justify-between">
-        <div className="w-full md:w-auto overflow-x-auto pb-2 -mx-4 px-4 md:mx-0 md:px-0">
-          <div className="flex items-center gap-2 min-w-max">
-            <Button
-              variant={activeCategoryId === null ? "default" : "secondary"}
-              onClick={() => setActiveCategoryId(null)}
-              className="rounded-full"
-            >
-              All Items
-            </Button>
-            {categoriesLoading
-              ? Array.from({ length: 4 }).map((_, i) => (
-                  <Skeleton key={i} className="h-10 w-24 rounded-full" />
-                ))
-              : categories
-                  ?.filter((c) => c.isActive)
-                  .map((category) => (
-                    <Button
-                      key={category.id}
-                      variant={activeCategoryId === category.id ? "default" : "secondary"}
-                      onClick={() => setActiveCategoryId(category.id)}
-                      className="rounded-full"
-                    >
-                      {category.name}
-                    </Button>
+      {/* ── Content ─────────────────────────────────────────────────── */}
+      <div className="container mx-auto px-4 py-8 space-y-14">
+        {isLoading ? (
+          /* Loading skeleton */
+          <div className="space-y-12">
+            {[1, 2, 3].map((g) => (
+              <div key={g}>
+                <Skeleton className="h-7 w-40 mb-5 rounded-lg" />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {[1, 2, 3, 4].map((i) => (
+                    <Skeleton key={i} className="h-[108px] rounded-2xl" />
                   ))}
+                </div>
+              </div>
+            ))}
           </div>
-        </div>
+        ) : (
+          <>
+            {/* Most Selling */}
+            {featuredItems.length > 0 && (
+              <section
+                id={SEC_MOST_SELLING}
+                ref={(el) => el && sectionEls.current.set(SEC_MOST_SELLING, el)}
+              >
+                <SectionHeader
+                  icon={<Flame className="h-5 w-5 text-primary" />}
+                  title="Most Selling"
+                  subtitle="Customers' all-time favourites"
+                />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {featuredItems.map((item) => (
+                    <ItemCard key={item.id} item={item} onAdd={handleAddToCart} />
+                  ))}
+                </div>
+              </section>
+            )}
 
-        <div className="w-full md:w-72 relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search menu..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9 rounded-full bg-secondary/50 border-transparent focus-visible:ring-primary"
-          />
-        </div>
-      </div>
+            {/* Deals */}
+            {hasDeals && (
+              <section
+                id={SEC_DEALS}
+                ref={(el) => el && sectionEls.current.set(SEC_DEALS, el)}
+              >
+                <SectionHeader
+                  icon={<Tag className="h-5 w-5 text-primary" />}
+                  title="Deals"
+                  subtitle="Limited-time combo offers set by the restaurant"
+                />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {deals!.map((deal) => (
+                    <DealCard key={deal.id} deal={deal} />
+                  ))}
+                </div>
+              </section>
+            )}
 
-      {itemsLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {Array.from({ length: 8 }).map((_, i) => (
-            <div key={i} className="flex flex-col space-y-4">
-              <Skeleton className="h-48 w-full rounded-2xl" />
-              <Skeleton className="h-6 w-3/4" />
-              <Skeleton className="h-4 w-full" />
-              <div className="flex justify-between pt-2">
-                <Skeleton className="h-6 w-20" />
-                <Skeleton className="h-8 w-8 rounded-full" />
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : filteredItems.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {filteredItems.map((item) => (
-            <Link key={item.id} href={`/menu/${item.slug}`}>
-              <div className="group flex flex-col h-full bg-card rounded-2xl border border-border overflow-hidden hover:shadow-xl transition-all duration-300 hover:border-primary/30 cursor-pointer">
-                <div className="relative aspect-[4/3] bg-muted overflow-hidden">
-                  <img
-                    src={item.imageUrl || "/placeholder.png"}
-                    alt={item.name}
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+            {/* Per-category sections */}
+            {activeCategories.map((cat) => {
+              const catItems = menuItems?.filter((i) => i.categoryId === cat.id) ?? [];
+              if (catItems.length === 0) return null;
+              const id = `cat-${cat.id}`;
+              return (
+                <section
+                  key={cat.id}
+                  id={id}
+                  ref={(el) => el && sectionEls.current.set(id, el)}
+                >
+                  <SectionHeader
+                    title={cat.name}
+                    subtitle={cat.description ?? undefined}
                   />
-                  {item.isFeatured && (
-                    <div className="absolute top-3 left-3 bg-accent text-accent-foreground text-xs font-bold px-2 py-1 rounded">
-                      Signature
-                    </div>
-                  )}
-                </div>
-                <div className="p-5 flex flex-col flex-1">
-                  <div className="flex items-start justify-between gap-2 mb-2">
-                    <h3 className="font-heading font-bold text-lg leading-tight group-hover:text-primary transition-colors">
-                      {item.name}
-                    </h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {catItems.map((item) => (
+                      <ItemCard key={item.id} item={item} onAdd={handleAddToCart} />
+                    ))}
                   </div>
-                  <p className="text-sm text-muted-foreground line-clamp-2 mb-4 flex-1">
-                    {item.description}
-                  </p>
-
-                  <div className="flex items-center justify-between mt-auto pt-4 border-t border-border/50">
-                    <div className="flex items-baseline gap-2">
-                      <span className="font-black text-lg">Rs. {item.price}</span>
-                      {item.originalPrice && (
-                        <span className="text-xs text-muted-foreground line-through">
-                          Rs. {item.originalPrice}
-                        </span>
-                      )}
-                    </div>
-                    <Button
-                      size="icon"
-                      className="rounded-full h-10 w-10 shrink-0"
-                      onClick={(e) => handleAddToCart(e, item)}
-                    >
-                      <Plus className="h-5 w-5" />
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </Link>
-          ))}
-        </div>
-      ) : (
-        <div className="text-center py-20 bg-muted/30 rounded-2xl">
-          <p className="text-lg text-muted-foreground">
-            No menu items found matching your criteria.
-          </p>
-          <Button
-            variant="outline"
-            className="mt-4"
-            onClick={() => {
-              setActiveCategoryId(null);
-              setSearchQuery("");
-            }}
-          >
-            Clear Filters
-          </Button>
-        </div>
-      )}
+                </section>
+              );
+            })}
+          </>
+        )}
+      </div>
     </div>
   );
 }
