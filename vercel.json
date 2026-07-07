@@ -1,6 +1,5 @@
 {
   "buildCommand": "pnpm install && pnpm --filter @workspace/flare-nextjs run build",
   "installCommand": "pnpm install",
-  "framework": "nextjs",
   "outputDirectory": "artifacts/flare-nextjs/.next"
 }
