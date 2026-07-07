@@ -2,6 +2,7 @@ import { Router, type IRouter } from "express";
 import { eq } from "drizzle-orm";
 import { db, dealsTable } from "@workspace/db";
 import { requireAdmin } from "../middlewares/requireAdmin";
+import { redis, CACHE_TTL, KEYS } from "../lib/redis";
 import {
   ListDealsResponse,
   ListDealsQueryParams,
@@ -32,14 +33,30 @@ router.get("/deals", async (req, res): Promise<void> => {
     active: req.query.active !== undefined ? req.query.active === "true" : undefined,
   });
 
-  if (qp.success && qp.data.active != null) {
-    const rows = await db.select().from(dealsTable).where(eq(dealsTable.isActive, qp.data.active)).orderBy(dealsTable.sortOrder);
-    res.json(ListDealsResponse.parse(rows.map(mapDeal)));
-    return;
+  const hasFilters = qp.success && qp.data.active != null;
+
+  if (!hasFilters) {
+    const cached = await redis.get<string>(KEYS.deals);
+    if (cached) {
+      res.json(cached);
+      return;
+    }
   }
 
-  const rows = await db.select().from(dealsTable).orderBy(dealsTable.sortOrder);
-  res.json(ListDealsResponse.parse(rows.map(mapDeal)));
+  let rows;
+  if (hasFilters && qp.success && qp.data.active != null) {
+    rows = await db.select().from(dealsTable).where(eq(dealsTable.isActive, qp.data.active)).orderBy(dealsTable.sortOrder);
+  } else {
+    rows = await db.select().from(dealsTable).orderBy(dealsTable.sortOrder);
+  }
+
+  const parsed = ListDealsResponse.parse(rows.map(mapDeal));
+
+  if (!hasFilters) {
+    await redis.set(KEYS.deals, parsed, { ex: CACHE_TTL });
+  }
+
+  res.json(parsed);
 });
 
 router.post("/deals", requireAdmin, async (req, res): Promise<void> => {
@@ -56,6 +73,9 @@ router.post("/deals", requireAdmin, async (req, res): Promise<void> => {
     ...(originalPrice != null ? { originalPrice: originalPrice.toString() } : {}),
     ...(dealPrice != null ? { dealPrice: dealPrice.toString() } : {}),
   }).returning();
+
+  await redis.del(KEYS.deals);
+
   res.status(201).json(CreateDealResponse.parse(mapDeal(row)));
 });
 
@@ -108,6 +128,8 @@ router.patch("/deals/:id", requireAdmin, async (req, res): Promise<void> => {
     return;
   }
 
+  await redis.del(KEYS.deals);
+
   res.json(UpdateDealResponse.parse(mapDeal(row)));
 });
 
@@ -124,6 +146,8 @@ router.delete("/deals/:id", requireAdmin, async (req, res): Promise<void> => {
     res.status(404).json({ error: "Deal not found" });
     return;
   }
+
+  await redis.del(KEYS.deals);
 
   res.sendStatus(204);
 });

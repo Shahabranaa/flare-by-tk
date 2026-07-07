@@ -2,6 +2,7 @@ import { Router, type IRouter } from "express";
 import { eq, and } from "drizzle-orm";
 import { db, menuItemsTable, categoriesTable } from "@workspace/db";
 import { requireAdmin } from "../middlewares/requireAdmin";
+import { redis, CACHE_TTL, KEYS } from "../lib/redis";
 import {
   ListMenuItemsResponse,
   ListMenuItemsQueryParams,
@@ -31,6 +32,16 @@ router.get("/menu-items", async (req, res): Promise<void> => {
     featured: req.query.featured !== undefined ? req.query.featured === "true" : undefined,
     available: req.query.available !== undefined ? req.query.available === "true" : undefined,
   });
+
+  const hasFilters = qp.success && (qp.data.categoryId != null || qp.data.featured != null || qp.data.available != null);
+
+  if (!hasFilters) {
+    const cached = await redis.get<string>(KEYS.menuItems);
+    if (cached) {
+      res.json(cached);
+      return;
+    }
+  }
 
   const where = qp.success ? buildFilters(qp.data) : undefined;
 
@@ -63,7 +74,13 @@ router.get("/menu-items", async (req, res): Promise<void> => {
     createdAt: r.createdAt.toISOString(),
   }));
 
-  res.json(ListMenuItemsResponse.parse(result));
+  const parsed = ListMenuItemsResponse.parse(result);
+
+  if (!hasFilters) {
+    await redis.set(KEYS.menuItems, parsed, { ex: CACHE_TTL });
+  }
+
+  res.json(parsed);
 });
 
 router.post("/menu-items", requireAdmin, async (req, res): Promise<void> => {
@@ -80,6 +97,8 @@ router.post("/menu-items", requireAdmin, async (req, res): Promise<void> => {
     ...(originalPrice != null ? { originalPrice: originalPrice.toString() } : {}),
   }).returning();
   const [cat] = await db.select({ name: categoriesTable.name }).from(categoriesTable).where(eq(categoriesTable.id, row.categoryId));
+
+  await redis.del(KEYS.menuItems);
 
   res.status(201).json(CreateMenuItemResponse.parse({
     ...row,
@@ -165,6 +184,8 @@ router.patch("/menu-items/:id", requireAdmin, async (req, res): Promise<void> =>
 
   const [cat] = await db.select({ name: categoriesTable.name }).from(categoriesTable).where(eq(categoriesTable.id, row.categoryId));
 
+  await redis.del(KEYS.menuItems);
+
   res.json(UpdateMenuItemResponse.parse({
     ...row,
     categoryName: cat?.name ?? null,
@@ -187,6 +208,8 @@ router.delete("/menu-items/:id", requireAdmin, async (req, res): Promise<void> =
     res.status(404).json({ error: "Menu item not found" });
     return;
   }
+
+  await redis.del(KEYS.menuItems);
 
   res.sendStatus(204);
 });

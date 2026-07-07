@@ -2,6 +2,7 @@ import { Router, type IRouter } from "express";
 import { eq, sql } from "drizzle-orm";
 import { db, categoriesTable, menuItemsTable } from "@workspace/db";
 import { requireAdmin } from "../middlewares/requireAdmin";
+import { redis, CACHE_TTL, KEYS } from "../lib/redis";
 import {
   ListCategoriesResponse,
   CreateCategoryBody,
@@ -17,6 +18,12 @@ import {
 const router: IRouter = Router();
 
 router.get("/categories", async (req, res): Promise<void> => {
+  const cached = await redis.get<string>(KEYS.categories);
+  if (cached) {
+    res.json(cached);
+    return;
+  }
+
   const rows = await db
     .select({
       id: categoriesTable.id,
@@ -48,7 +55,10 @@ router.get("/categories", async (req, res): Promise<void> => {
     createdAt: r.createdAt.toISOString(),
   }));
 
-  res.json(ListCategoriesResponse.parse(result));
+  const parsed = ListCategoriesResponse.parse(result);
+  await redis.set(KEYS.categories, parsed, { ex: CACHE_TTL });
+
+  res.json(parsed);
 });
 
 router.post("/categories", requireAdmin, async (req, res): Promise<void> => {
@@ -59,6 +69,8 @@ router.post("/categories", requireAdmin, async (req, res): Promise<void> => {
   }
 
   const [row] = await db.insert(categoriesTable).values(parsed.data).returning();
+
+  await redis.del(KEYS.categories);
 
   res.status(201).json(CreateCategoryResponse.parse({ ...row, itemCount: 0, createdAt: row.createdAt.toISOString() }));
 });
@@ -109,6 +121,8 @@ router.patch("/categories/:id", requireAdmin, async (req, res): Promise<void> =>
     return;
   }
 
+  await redis.del(KEYS.categories);
+
   res.json(UpdateCategoryResponse.parse({ ...row, itemCount: 0, createdAt: row.createdAt.toISOString() }));
 });
 
@@ -125,6 +139,8 @@ router.delete("/categories/:id", requireAdmin, async (req, res): Promise<void> =
     res.status(404).json({ error: "Category not found" });
     return;
   }
+
+  await redis.del(KEYS.categories);
 
   res.sendStatus(204);
 });
