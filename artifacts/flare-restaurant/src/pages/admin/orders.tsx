@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useListOrders, useUpdateOrderStatus, OrderStatusUpdateStatus, getListOrdersQueryKey, getGetAdminDashboardQueryKey } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { FullPageLoader } from "@/components/ui/loading-spinner";
@@ -20,6 +20,22 @@ export function Orders() {
     status: statusFilter !== "all" ? (statusFilter as any) : undefined,
     limit: 100
   });
+
+  useEffect(() => {
+    const es = new EventSource("/api/orders/events");
+
+    es.onmessage = () => {
+      queryClient.invalidateQueries({ queryKey: getListOrdersQueryKey() });
+      queryClient.invalidateQueries({ queryKey: getGetAdminDashboardQueryKey() });
+    };
+
+    es.onerror = () => {
+    };
+
+    return () => {
+      es.close();
+    };
+  }, [queryClient]);
 
   const updateStatus = useUpdateOrderStatus();
 

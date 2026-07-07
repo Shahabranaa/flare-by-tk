@@ -16,6 +16,7 @@ import {
   UpdateOrderStatusResponse,
   GetAdminDashboardResponse,
 } from "@workspace/api-zod";
+import { emitOrderUpdate, onOrderUpdate, onOrderUpdateByToken } from "../lib/orderEvents";
 
 const router: IRouter = Router();
 
@@ -150,6 +151,28 @@ router.get("/orders/track/:token", async (req, res): Promise<void> => {
   res.json(mapOrderPublic(row));
 });
 
+// ── Admin: SSE stream for all order updates (must be before /orders/:id) ───
+router.get("/orders/events", requireAdmin, (req, res): void => {
+  res.setHeader("Content-Type", "text/event-stream");
+  res.setHeader("Cache-Control", "no-cache");
+  res.setHeader("Connection", "keep-alive");
+  res.setHeader("X-Accel-Buffering", "no");
+  res.flushHeaders();
+
+  const heartbeat = setInterval(() => {
+    res.write(": heartbeat\n\n");
+  }, 25000);
+
+  const unsubscribe = onOrderUpdate((payload) => {
+    res.write(`data: ${JSON.stringify(payload)}\n\n`);
+  });
+
+  req.on("close", () => {
+    clearInterval(heartbeat);
+    unsubscribe();
+  });
+});
+
 // ── Admin: get order by id ──────────────────────────────────────────────────
 router.get("/orders/:id", requireAdmin, async (req, res): Promise<void> => {
   const rawId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
@@ -194,7 +217,42 @@ router.patch("/orders/:id/status", requireAdmin, async (req, res): Promise<void>
     return;
   }
 
+  emitOrderUpdate({
+    id: row.id,
+    trackingToken: row.trackingToken,
+    status: row.status,
+    updatedAt: row.updatedAt instanceof Date ? row.updatedAt.toISOString() : String(row.updatedAt),
+  });
+
   res.json(UpdateOrderStatusResponse.parse(mapOrder(row)));
+});
+
+// ── Public: SSE stream for a single order by tracking token ────────────────
+router.get("/orders/track/:token/events", (req, res): void => {
+  const token = Array.isArray(req.params.token) ? req.params.token[0] : req.params.token;
+  if (!token || token.length < 10) {
+    res.status(400).json({ error: "Invalid tracking token" });
+    return;
+  }
+
+  res.setHeader("Content-Type", "text/event-stream");
+  res.setHeader("Cache-Control", "no-cache");
+  res.setHeader("Connection", "keep-alive");
+  res.setHeader("X-Accel-Buffering", "no");
+  res.flushHeaders();
+
+  const heartbeat = setInterval(() => {
+    res.write(": heartbeat\n\n");
+  }, 25000);
+
+  const unsubscribe = onOrderUpdateByToken(token, (payload) => {
+    res.write(`data: ${JSON.stringify(payload)}\n\n`);
+  });
+
+  req.on("close", () => {
+    clearInterval(heartbeat);
+    unsubscribe();
+  });
 });
 
 // ── Admin: dashboard summary ────────────────────────────────────────────────

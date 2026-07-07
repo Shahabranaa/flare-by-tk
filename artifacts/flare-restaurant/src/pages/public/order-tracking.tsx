@@ -1,8 +1,9 @@
+import { useEffect } from "react";
 import { useParams } from "wouter";
 import { FullPageLoader } from "@/components/ui/loading-spinner";
 import { CheckCircle2, Clock, ChefHat, CheckSquare, XCircle, ArrowLeft } from "lucide-react";
 import { Link } from "wouter";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 interface PublicOrder {
   id: number;
@@ -23,17 +24,38 @@ async function fetchOrderByToken(token: string): Promise<PublicOrder> {
 
 export function OrderTracking() {
   const { token } = useParams<{ token: string }>();
+  const queryClient = useQueryClient();
 
   const { data: order, isLoading } = useQuery<PublicOrder>({
     queryKey: ["order-track", token],
     queryFn: () => fetchOrderByToken(token!),
     enabled: !!token,
-    refetchInterval: (query) => {
-      const status = query.state.data?.status;
-      if (status === "completed" || status === "cancelled") return false;
-      return 5000;
-    },
   });
+
+  useEffect(() => {
+    if (!token) return;
+    if (order?.status === "completed" || order?.status === "cancelled") return;
+
+    const es = new EventSource(`/api/orders/track/${token}/events`);
+
+    es.onmessage = (event) => {
+      try {
+        const payload = JSON.parse(event.data) as { status: string };
+        queryClient.setQueryData<PublicOrder>(["order-track", token], (prev) => {
+          if (!prev) return prev;
+          return { ...prev, status: payload.status };
+        });
+      } catch {
+      }
+    };
+
+    es.onerror = () => {
+    };
+
+    return () => {
+      es.close();
+    };
+  }, [token, order?.status, queryClient]);
 
   if (isLoading) return <FullPageLoader />;
 
