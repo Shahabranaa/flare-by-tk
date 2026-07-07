@@ -1,9 +1,14 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@500;600;700;800;900&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --primary: #f97316;
+  --background: #15181f;
+  --card: #191c24;
+  --card-border: #252b38;
+  --muted-fg: #9fa5b0;
+  --primary: #ff6b1a;
 }
 
 html {
@@ -11,11 +16,21 @@ html {
 }
 
 body {
-  background-color: #0a0a0a;
-  color: #f4f4f5;
+  background-color: var(--background);
+  color: #e8eaf0;
   font-family: 'Inter', system-ui, sans-serif;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Poppins', sans-serif;
 }
 
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 4px; }
+::-webkit-scrollbar-thumb { background: #252b38; border-radius: 4px; }
+
+@layer utilities {
+  .font-heading { font-family: 'Poppins', sans-serif; }
+  .bg-card-dark { background-color: var(--card); }
+  .border-card { border-color: var(--card-border); }
+}

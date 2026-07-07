@@ -1,17 +1,17 @@
 {
-  "/api/admin/login/route": "/api/admin/login",
-  "/api/deals/route": "/api/deals",
-  "/api/categories/route": "/api/categories",
-  "/api/orders/[id]/route": "/api/orders/[id]",
   "/_not-found/page": "/_not-found",
+  "/api/admin/login/route": "/api/admin/login",
+  "/api/categories/route": "/api/categories",
+  "/api/deals/route": "/api/deals",
   "/api/menu-items/route": "/api/menu-items",
   "/api/orders/route": "/api/orders",
+  "/api/orders/[id]/route": "/api/orders/[id]",
   "/api/orders/track/[token]/route": "/api/orders/track/[token]",
-  "/menu/page": "/menu",
-  "/admin/page": "/admin",
   "/cart/page": "/cart",
-  "/order/[token]/page": "/order/[token]",
-  "/deals/page": "/deals",
   "/page": "/",
-  "/about/page": "/about"
+  "/order/[token]/page": "/order/[token]",
+  "/admin/page": "/admin",
+  "/about/page": "/about",
+  "/menu/page": "/menu",
+  "/deals/page": "/deals"
 }

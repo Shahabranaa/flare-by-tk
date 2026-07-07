@@ -1,17 +1,17 @@
 {
-  "/api/admin/login/route": "app/api/admin/login/route.js",
-  "/api/deals/route": "app/api/deals/route.js",
-  "/api/categories/route": "app/api/categories/route.js",
-  "/api/orders/[id]/route": "app/api/orders/[id]/route.js",
   "/_not-found/page": "app/_not-found/page.js",
+  "/api/admin/login/route": "app/api/admin/login/route.js",
+  "/api/categories/route": "app/api/categories/route.js",
+  "/api/deals/route": "app/api/deals/route.js",
   "/api/menu-items/route": "app/api/menu-items/route.js",
   "/api/orders/route": "app/api/orders/route.js",
+  "/api/orders/[id]/route": "app/api/orders/[id]/route.js",
   "/api/orders/track/[token]/route": "app/api/orders/track/[token]/route.js",
-  "/menu/page": "app/menu/page.js",
-  "/admin/page": "app/admin/page.js",
   "/cart/page": "app/cart/page.js",
-  "/order/[token]/page": "app/order/[token]/page.js",
-  "/deals/page": "app/deals/page.js",
   "/page": "app/page.js",
-  "/about/page": "app/about/page.js"
+  "/order/[token]/page": "app/order/[token]/page.js",
+  "/admin/page": "app/admin/page.js",
+  "/about/page": "app/about/page.js",
+  "/menu/page": "app/menu/page.js",
+  "/deals/page": "app/deals/page.js"
 }
