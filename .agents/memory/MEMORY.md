@@ -1,2 +1,3 @@
 - [Admin auth setup](admin-auth.md) — ADMIN_USER_IDS env var (comma-separated Clerk user IDs) gates all admin routes; unset → 503 not silent grant.
 - [Order tracking token](order-tracking-token.md) — Public order lookup uses UUID trackingToken (not sequential id) to prevent IDOR; PII stripped from public response.
+- [Next.js install in Replit](nextjs-replit-install.md) — Replit proxy blocks next.js tarballs; use `node node_modules/next/dist/bin/next` in package.json scripts to bypass missing .bin symlink.

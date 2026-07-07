@@ -1,0 +1,21 @@
+kind = "web"
+previewPath = "/"
+title = "Flare by TK (Next.js)"
+version = "1.0.0"
+id = "artifacts/flare-nextjs"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 3001
+
+[services.development]
+run = "pnpm --filter @workspace/flare-nextjs run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/flare-nextjs", "run", "build" ]
+serve = "nextjs"
+
+[services.env]
+PORT = "3001"
