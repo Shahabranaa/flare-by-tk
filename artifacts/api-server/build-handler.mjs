@@ -2,7 +2,6 @@ import { createRequire } from "node:module";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { build as esbuild } from "esbuild";
-import esbuildPluginPino from "esbuild-plugin-pino";
 
 globalThis.require = createRequire(import.meta.url);
 
@@ -32,7 +31,6 @@ await esbuild({
     "zeromq-prebuilt","playwright","puppeteer","puppeteer-core","electron",
   ],
   sourcemap: false,
-  plugins: [esbuildPluginPino({ transports: ["pino-pretty"] })],
   banner: {
     js: `import { createRequire as __bannerCrReq } from 'node:module';
 import __bannerPath from 'node:path';
