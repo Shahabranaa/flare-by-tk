@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 60">
+  <defs>
+    <linearGradient id="fire-gradient" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" stop-color="#FF3D00" />
+      <stop offset="50%" stop-color="#FF9100" />
+      <stop offset="100%" stop-color="#FFC400" />
+    </linearGradient>
+  </defs>
+  <path d="M 30,50 C 15,50 10,35 15,25 C 20,15 35,5 30,0 C 40,10 45,20 40,30 C 45,25 50,20 50,15 C 55,25 55,40 45,45 C 40,47.5 35,50 30,50 Z" fill="url(#fire-gradient)"/>
+  <text x="70" y="40" font-family="Poppins, sans-serif" font-weight="900" font-size="32" fill="#FFFFFF" letter-spacing="1">FLARE</text>
+  <text x="175" y="40" font-family="Poppins, sans-serif" font-weight="400" font-size="14" fill="#FF9100">BY TK</text>
+</svg>

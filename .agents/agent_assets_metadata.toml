@@ -1,0 +1,56 @@
+uploads = []
+outputs = []
+
+[[generated]]
+id = "FdUKxDareT6DoprvuhvY0"
+uri = "file://artifacts/flare-restaurant/public/hero-bbq.png"
+type = "image"
+title = "Hero banner sizzling BBQ"
+
+[[generated]]
+id = "E9vo8CMQoehQVuR05Qup9"
+uri = "file://artifacts/flare-restaurant/public/biryani.png"
+type = "image"
+title = "Chicken Biryani"
+
+[[generated]]
+id = "GPGUPjPOkPVpluHKi6ifB"
+uri = "file://artifacts/flare-restaurant/public/karahi.png"
+type = "image"
+title = "Chicken Karahi"
+
+[[generated]]
+id = "GNFMaGQPv5lTE4gZcx5TW"
+uri = "file://artifacts/flare-restaurant/public/seekh-kebab.png"
+type = "image"
+title = "Beef Seekh Kebab"
+
+[[generated]]
+id = "c_lP4A9RTE35rlluQScme"
+uri = "file://artifacts/flare-restaurant/public/zinger-burger.png"
+type = "image"
+title = "Zinger Burger"
+
+[[generated]]
+id = "FC48d7iJCbIj3L3PGdpUW"
+uri = "file://artifacts/flare-restaurant/public/chicken-tikka.png"
+type = "image"
+title = "Chicken Tikka"
+
+[[generated]]
+id = "BpX4wffhviLgK7yhzRIYJ"
+uri = "file://artifacts/flare-restaurant/public/garlic-naan.png"
+type = "image"
+title = "Garlic Naan"
+
+[[generated]]
+id = "YUJgF4qdaE7X5drfdilSX"
+uri = "file://artifacts/flare-restaurant/public/deal-combo.png"
+type = "image"
+title = "Deal banner combo"
+
+[[generated]]
+id = "UXIbafFPlhG8UskXd9jqB"
+uri = "file://artifacts/flare-restaurant/public/deal-bbq.png"
+type = "image"
+title = "Deal banner BBQ"
