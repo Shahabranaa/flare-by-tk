@@ -3,6 +3,7 @@ import { ShoppingBag, Menu as MenuIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/lib/cart";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { FloatingCart } from "@/components/ui/floating-cart";
 import { ReactNode } from "react";
 
 export function PublicLayout({ children }: { children: ReactNode }) {
@@ -12,9 +13,24 @@ export function PublicLayout({ children }: { children: ReactNode }) {
 
   const NavLinks = () => (
     <>
-      <Link href="/menu" className={`text-sm font-medium transition-colors hover:text-primary ${location.startsWith("/menu") ? "text-primary" : "text-muted-foreground"}`}>Menu</Link>
-      <Link href="/deals" className={`text-sm font-medium transition-colors hover:text-primary ${location.startsWith("/deals") ? "text-primary" : "text-muted-foreground"}`}>Deals</Link>
-      <Link href="/about" className={`text-sm font-medium transition-colors hover:text-primary ${location.startsWith("/about") ? "text-primary" : "text-muted-foreground"}`}>About Us</Link>
+      <Link
+        href="/"
+        className={`text-sm font-medium transition-colors hover:text-primary ${location === "/" ? "text-primary" : "text-muted-foreground"}`}
+      >
+        Menu
+      </Link>
+      <Link
+        href="/deals"
+        className={`text-sm font-medium transition-colors hover:text-primary ${location.startsWith("/deals") ? "text-primary" : "text-muted-foreground"}`}
+      >
+        Deals
+      </Link>
+      <Link
+        href="/about"
+        className={`text-sm font-medium transition-colors hover:text-primary ${location.startsWith("/about") ? "text-primary" : "text-muted-foreground"}`}
+      >
+        About Us
+      </Link>
     </>
   );
 
@@ -42,7 +58,7 @@ export function PublicLayout({ children }: { children: ReactNode }) {
                 )}
               </Button>
             </Link>
-            
+
             <Sheet>
               <SheetTrigger asChild>
                 <Button variant="ghost" size="icon" className="md:hidden">
@@ -54,7 +70,9 @@ export function PublicLayout({ children }: { children: ReactNode }) {
                   <NavLinks />
                   <div className="mt-4 border-t pt-4">
                     <Link href="/admin">
-                      <Button variant="outline" className="w-full justify-start">Staff Login</Button>
+                      <Button variant="outline" className="w-full justify-start">
+                        Staff Login
+                      </Button>
                     </Link>
                   </div>
                 </nav>
@@ -64,9 +82,7 @@ export function PublicLayout({ children }: { children: ReactNode }) {
         </div>
       </header>
 
-      <main className="flex-1">
-        {children}
-      </main>
+      <main className="flex-1">{children}</main>
 
       <footer className="border-t bg-card text-card-foreground">
         <div className="container mx-auto px-4 py-12 md:py-16">
@@ -74,27 +90,44 @@ export function PublicLayout({ children }: { children: ReactNode }) {
             <div>
               <img src="/logo.svg" alt="Flare by TK" className="h-8 mb-4 opacity-80" />
               <p className="text-muted-foreground text-sm max-w-xs">
-                Premium fire-grilled meats, sizzling platters, and bold flavors in the heart of Bahawalpur.
+                Premium fire-grilled meats, sizzling platters, and bold flavors near Dubai Chowk, Bahawalpur.
+              </p>
+              <p className="text-muted-foreground text-sm mt-3 font-medium">
+                📞 0345-1116520
               </p>
             </div>
             <div>
               <h4 className="font-heading font-semibold mb-4">Quick Links</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><Link href="/menu" className="hover:text-primary">Full Menu</Link></li>
-                <li><Link href="/deals" className="hover:text-primary">Offers & Deals</Link></li>
-                <li><Link href="/about" className="hover:text-primary">Our Story</Link></li>
+                <li>
+                  <Link href="/" className="hover:text-primary">
+                    Full Menu
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/deals" className="hover:text-primary">
+                    Offers & Deals
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/about" className="hover:text-primary">
+                    Our Story
+                  </Link>
+                </li>
               </ul>
             </div>
             <div>
               <h4 className="font-heading font-semibold mb-4">Visit Us</h4>
               <address className="not-italic text-sm text-muted-foreground space-y-2">
-                <p>Bahawalpur, Punjab</p>
-                <p>Pakistan</p>
-                <p>Tel: +92 300 1234567</p>
+                <p>Near Dubai Chowk, Mehmood CNG</p>
+                <p>Bahawalpur, Punjab, Pakistan</p>
+                <p className="mt-3 font-medium text-foreground">0345-1116520</p>
               </address>
               <div className="mt-4">
                 <Link href="/admin">
-                  <span className="text-xs text-muted-foreground hover:text-primary cursor-pointer">Admin Portal</span>
+                  <span className="text-xs text-muted-foreground hover:text-primary cursor-pointer">
+                    Admin Portal
+                  </span>
                 </Link>
               </div>
             </div>
@@ -104,6 +137,9 @@ export function PublicLayout({ children }: { children: ReactNode }) {
           </div>
         </div>
       </footer>
+
+      {/* Floating cart — hides on cart/checkout/admin pages */}
+      <FloatingCart />
     </div>
   );
 }
