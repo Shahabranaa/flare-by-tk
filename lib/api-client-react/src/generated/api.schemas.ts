@@ -257,6 +257,7 @@ export const OrderInputOrderType = {
 
 export interface OrderItemInput {
   menuItemId: number;
+  /** @minimum 1 */
   quantity: number;
 }
 

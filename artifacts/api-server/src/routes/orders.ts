@@ -75,25 +75,50 @@ router.post("/orders", async (req, res): Promise<void> => {
 
   const { items, ...orderData } = parsed.data;
 
+  if (items.length === 0) {
+    res.status(400).json({ error: "Order must contain at least one item" });
+    return;
+  }
+
+  const invalidItems = items.filter((i) => i.quantity < 1);
+  if (invalidItems.length > 0) {
+    res.status(400).json({ error: "Each item quantity must be at least 1" });
+    return;
+  }
+
   const menuItemIds = items.map((i) => i.menuItemId);
   const menuItems = await db
-    .select({ id: menuItemsTable.id, name: menuItemsTable.name, price: menuItemsTable.price })
+    .select({ id: menuItemsTable.id, name: menuItemsTable.name, price: menuItemsTable.price, isAvailable: menuItemsTable.isAvailable })
     .from(menuItemsTable)
     .where(sql`${menuItemsTable.id} = ANY(${menuItemIds}::int[])`);
 
   const menuItemMap = new Map(menuItems.map((m) => [m.id, m]));
 
+  const missingIds = menuItemIds.filter((id) => !menuItemMap.has(id));
+  if (missingIds.length > 0) {
+    res.status(400).json({ error: `Menu items not found: ${missingIds.join(", ")}` });
+    return;
+  }
+
+  const unavailableItems = menuItemIds.filter((id) => !menuItemMap.get(id)!.isAvailable);
+  if (unavailableItems.length > 0) {
+    res.status(400).json({ error: `Some items are currently unavailable: ${unavailableItems.join(", ")}` });
+    return;
+  }
+
   const enrichedItems = items.map((item) => {
-    const menuItem = menuItemMap.get(item.menuItemId);
+    const menuItem = menuItemMap.get(item.menuItemId)!;
     return {
       menuItemId: item.menuItemId,
-      name: menuItem?.name ?? "Unknown Item",
-      price: menuItem ? parseFloat(menuItem.price) : 0,
+      name: menuItem.name,
+      price: parseFloat(menuItem.price),
       quantity: item.quantity,
     };
   });
 
-  const totalAmount = enrichedItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const subtotal = enrichedItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const deliveryFee = orderData.orderType === "delivery" ? 150 : 0;
+  const totalAmount = subtotal + deliveryFee;
 
   const [row] = await db
     .insert(ordersTable)

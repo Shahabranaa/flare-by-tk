@@ -426,6 +426,7 @@ export const ListOrdersResponse = zod.array(ListOrdersResponseItem)
 
 
 
+
 export const CreateOrderBody = zod.object({
   "customerName": zod.string().min(1),
   "customerPhone": zod.string().min(1),
@@ -434,7 +435,7 @@ export const CreateOrderBody = zod.object({
   "specialInstructions": zod.string().optional(),
   "items": zod.array(zod.object({
   "menuItemId": zod.number(),
-  "quantity": zod.number()
+  "quantity": zod.number().min(1)
 }))
 })
 
