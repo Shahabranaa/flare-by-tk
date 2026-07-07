@@ -391,7 +391,7 @@ export const DeleteDealResponse = zod.void()
 
 
 /**
- * @summary List orders (admin — all; customer can track their own order via ID)
+ * @summary List orders (admin only)
  */
 export const ListOrdersQueryParams = zod.object({
   "status": zod.enum(['new', 'preparing', 'ready', 'completed', 'cancelled']).optional(),
@@ -400,6 +400,7 @@ export const ListOrdersQueryParams = zod.object({
 
 export const ListOrdersResponseItem = zod.object({
   "id": zod.number(),
+  "trackingToken": zod.string(),
   "customerName": zod.string(),
   "customerPhone": zod.string(),
   "customerAddress": zod.string().nullish(),
@@ -419,7 +420,7 @@ export const ListOrdersResponse = zod.array(ListOrdersResponseItem)
 
 
 /**
- * @summary Place a new order (guest)
+ * @summary Place a new order (guest — no auth required)
  */
 
 
@@ -439,6 +440,7 @@ export const CreateOrderBody = zod.object({
 
 export const CreateOrderResponse = zod.object({
   "id": zod.number(),
+  "trackingToken": zod.string(),
   "customerName": zod.string(),
   "customerPhone": zod.string(),
   "customerAddress": zod.string().nullish(),
@@ -457,7 +459,31 @@ export const CreateOrderResponse = zod.object({
 
 
 /**
- * @summary Get an order by ID (for customer order tracking)
+ * @summary Track an order by UUID token (public — no auth, no PII in response)
+ */
+export const TrackOrderParams = zod.object({
+  "token": zod.coerce.string()
+})
+
+export const TrackOrderResponse = zod.object({
+  "id": zod.number(),
+  "trackingToken": zod.string(),
+  "orderType": zod.enum(['delivery', 'pickup']),
+  "status": zod.enum(['new', 'preparing', 'ready', 'completed', 'cancelled']),
+  "totalAmount": zod.number(),
+  "specialInstructions": zod.string().nullish(),
+  "items": zod.array(zod.object({
+  "menuItemId": zod.number(),
+  "name": zod.string(),
+  "price": zod.number(),
+  "quantity": zod.number()
+})),
+  "createdAt": zod.string()
+}).describe('PII-stripped order view for unauthenticated tracking')
+
+
+/**
+ * @summary Get full order by ID (admin only)
  */
 export const GetOrderParams = zod.object({
   "id": zod.coerce.number()
@@ -465,6 +491,7 @@ export const GetOrderParams = zod.object({
 
 export const GetOrderResponse = zod.object({
   "id": zod.number(),
+  "trackingToken": zod.string(),
   "customerName": zod.string(),
   "customerPhone": zod.string(),
   "customerAddress": zod.string().nullish(),
@@ -495,6 +522,7 @@ export const UpdateOrderStatusBody = zod.object({
 
 export const UpdateOrderStatusResponse = zod.object({
   "id": zod.number(),
+  "trackingToken": zod.string(),
   "customerName": zod.string(),
   "customerPhone": zod.string(),
   "customerAddress": zod.string().nullish(),
@@ -529,6 +557,7 @@ export const GetAdminDashboardResponse = zod.object({
 }),
   "recentOrders": zod.array(zod.object({
   "id": zod.number(),
+  "trackingToken": zod.string(),
   "customerName": zod.string(),
   "customerPhone": zod.string(),
   "customerAddress": zod.string().nullish(),

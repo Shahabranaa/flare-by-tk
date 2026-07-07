@@ -49,7 +49,13 @@ router.post("/deals", requireAdmin, async (req, res): Promise<void> => {
     return;
   }
 
-  const [row] = await db.insert(dealsTable).values(parsed.data).returning();
+  const { discountValue, originalPrice, dealPrice, ...restDeal } = parsed.data;
+  const [row] = await db.insert(dealsTable).values({
+    ...restDeal,
+    ...(discountValue != null ? { discountValue: discountValue.toString() } : {}),
+    ...(originalPrice != null ? { originalPrice: originalPrice.toString() } : {}),
+    ...(dealPrice != null ? { dealPrice: dealPrice.toString() } : {}),
+  }).returning();
   res.status(201).json(CreateDealResponse.parse(mapDeal(row)));
 });
 
@@ -84,9 +90,16 @@ router.patch("/deals/:id", requireAdmin, async (req, res): Promise<void> => {
     return;
   }
 
+  const { discountValue, originalPrice, dealPrice, ...restDealUpdate } = parsed.data;
   const [row] = await db
     .update(dealsTable)
-    .set({ ...parsed.data, updatedAt: new Date() })
+    .set({
+      ...restDealUpdate,
+      updatedAt: new Date(),
+      ...(discountValue != null ? { discountValue: discountValue.toString() } : {}),
+      ...(originalPrice != null ? { originalPrice: originalPrice.toString() } : {}),
+      ...(dealPrice != null ? { dealPrice: dealPrice.toString() } : {}),
+    })
     .where(eq(dealsTable.id, params.data.id))
     .returning();
 

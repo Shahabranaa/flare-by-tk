@@ -73,7 +73,12 @@ router.post("/menu-items", requireAdmin, async (req, res): Promise<void> => {
     return;
   }
 
-  const [row] = await db.insert(menuItemsTable).values(parsed.data).returning();
+  const { price, originalPrice, ...rest } = parsed.data;
+  const [row] = await db.insert(menuItemsTable).values({
+    ...rest,
+    price: price.toString(),
+    ...(originalPrice != null ? { originalPrice: originalPrice.toString() } : {}),
+  }).returning();
   const [cat] = await db.select({ name: categoriesTable.name }).from(categoriesTable).where(eq(categoriesTable.id, row.categoryId));
 
   res.status(201).json(CreateMenuItemResponse.parse({
@@ -141,9 +146,15 @@ router.patch("/menu-items/:id", requireAdmin, async (req, res): Promise<void> =>
     return;
   }
 
+  const { price, originalPrice, ...restUpdate } = parsed.data;
   const [row] = await db
     .update(menuItemsTable)
-    .set({ ...parsed.data, updatedAt: new Date() })
+    .set({
+      ...restUpdate,
+      updatedAt: new Date(),
+      ...(price != null ? { price: price.toString() } : {}),
+      ...(originalPrice != null ? { originalPrice: originalPrice.toString() } : {}),
+    })
     .where(eq(menuItemsTable.id, params.data.id))
     .returning();
 

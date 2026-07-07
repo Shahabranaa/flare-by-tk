@@ -34,3 +34,6 @@ export * from './orderOrderType';
 export * from './orderStatus';
 export * from './orderStatusUpdate';
 export * from './orderStatusUpdateStatus';
+export * from './publicOrder';
+export * from './publicOrderOrderType';
+export * from './publicOrderStatus';

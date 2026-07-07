@@ -199,12 +199,47 @@ export const OrderStatus = {
 
 export interface Order {
   id: number;
+  trackingToken: string;
   customerName: string;
   customerPhone: string;
   /** @nullable */
   customerAddress?: string | null;
   orderType: OrderOrderType;
   status: OrderStatus;
+  totalAmount: number;
+  /** @nullable */
+  specialInstructions?: string | null;
+  items: OrderItem[];
+  createdAt: string;
+}
+
+export type PublicOrderOrderType = typeof PublicOrderOrderType[keyof typeof PublicOrderOrderType];
+
+
+export const PublicOrderOrderType = {
+  delivery: 'delivery',
+  pickup: 'pickup',
+} as const;
+
+export type PublicOrderStatus = typeof PublicOrderStatus[keyof typeof PublicOrderStatus];
+
+
+export const PublicOrderStatus = {
+  new: 'new',
+  preparing: 'preparing',
+  ready: 'ready',
+  completed: 'completed',
+  cancelled: 'cancelled',
+} as const;
+
+/**
+ * PII-stripped order view for unauthenticated tracking
+ */
+export interface PublicOrder {
+  id: number;
+  trackingToken: string;
+  orderType: PublicOrderOrderType;
+  status: PublicOrderStatus;
   totalAmount: number;
   /** @nullable */
   specialInstructions?: string | null;

@@ -354,7 +354,7 @@ paths:
     get:
       operationId: listOrders
       tags: [orders]
-      summary: List orders (admin — all; customer can track their own order via ID)
+      summary: List orders (admin only)
       parameters:
         - name: status
           in: query
@@ -378,10 +378,12 @@ paths:
                   $ref: "#/components/schemas/Order"
         "401":
           description: Unauthorized
+        "403":
+          description: Forbidden
     post:
       operationId: createOrder
       tags: [orders]
-      summary: Place a new order (guest)
+      summary: Place a new order (guest — no auth required)
       requestBody:
         required: true
         content:
@@ -390,7 +392,7 @@ paths:
               $ref: "#/components/schemas/OrderInput"
       responses:
         "201":
-          description: Order placed
+          description: Order placed — response includes trackingToken for unauthenticated tracking
           content:
             application/json:
               schema:
@@ -398,11 +400,32 @@ paths:
         "400":
           description: Validation error
 
+  /orders/track/{token}:
+    get:
+      operationId: trackOrder
+      tags: [orders]
+      summary: Track an order by UUID token (public — no auth, no PII in response)
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Public order status (PII stripped)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PublicOrder"
+        "404":
+          description: Not found
+
   /orders/{id}:
     get:
       operationId: getOrder
       tags: [orders]
-      summary: Get an order by ID (for customer order tracking)
+      summary: Get full order by ID (admin only)
       parameters:
         - name: id
           in: path
@@ -416,6 +439,10 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Order"
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
         "404":
           description: Not found
 
@@ -729,16 +756,44 @@ components:
 
     Order:
       type: object
-      required: [id, customerName, customerPhone, orderType, status, totalAmount, items, createdAt]
+      required: [id, trackingToken, customerName, customerPhone, orderType, status, totalAmount, items, createdAt]
       properties:
         id:
           type: integer
+        trackingToken:
+          type: string
         customerName:
           type: string
         customerPhone:
           type: string
         customerAddress:
           type: ["string", "null"]
+        orderType:
+          type: string
+          enum: [delivery, pickup]
+        status:
+          type: string
+          enum: [new, preparing, ready, completed, cancelled]
+        totalAmount:
+          type: number
+        specialInstructions:
+          type: ["string", "null"]
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/OrderItem"
+        createdAt:
+          type: string
+
+    PublicOrder:
+      type: object
+      description: PII-stripped order view for unauthenticated tracking
+      required: [id, trackingToken, orderType, status, totalAmount, items, createdAt]
+      properties:
+        id:
+          type: integer
+        trackingToken:
+          type: string
         orderType:
           type: string
           enum: [delivery, pickup]

@@ -6,18 +6,17 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { OrderItem } from './orderItem';
-import type { OrderOrderType } from './orderOrderType';
-import type { OrderStatus } from './orderStatus';
+import type { PublicOrderOrderType } from './publicOrderOrderType';
+import type { PublicOrderStatus } from './publicOrderStatus';
 
-export interface Order {
+/**
+ * PII-stripped order view for unauthenticated tracking
+ */
+export interface PublicOrder {
   id: number;
   trackingToken: string;
-  customerName: string;
-  customerPhone: string;
-  /** @nullable */
-  customerAddress?: string | null;
-  orderType: OrderOrderType;
-  status: OrderStatus;
+  orderType: PublicOrderOrderType;
+  status: PublicOrderStatus;
   totalAmount: number;
   /** @nullable */
   specialInstructions?: string | null;

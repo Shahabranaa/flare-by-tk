@@ -36,7 +36,8 @@ import type {
   MenuItemUpdate,
   Order,
   OrderInput,
-  OrderStatusUpdate
+  OrderStatusUpdate,
+  PublicOrder
 } from './api.schemas';
 
 import { customFetch } from '../custom-fetch';
@@ -1251,7 +1252,7 @@ export const getListOrdersUrl = (params?: ListOrdersParams,) => {
 }
 
 /**
- * @summary List orders (admin — all; customer can track their own order via ID)
+ * @summary List orders (admin only)
  */
 export const listOrders = async (params?: ListOrdersParams, options?: RequestInit): Promise<Order[]> => {
 
@@ -1298,7 +1299,7 @@ export type ListOrdersQueryError = ErrorType<void>
 
 
 /**
- * @summary List orders (admin — all; customer can track their own order via ID)
+ * @summary List orders (admin only)
  */
 
 export function useListOrders<TData = Awaited<ReturnType<typeof listOrders>>, TError = ErrorType<void>>(
@@ -1328,7 +1329,7 @@ export const getCreateOrderUrl = () => {
 }
 
 /**
- * @summary Place a new order (guest)
+ * @summary Place a new order (guest — no auth required)
  */
 export const createOrder = async (orderInput: OrderInput, options?: RequestInit): Promise<Order> => {
 
@@ -1376,7 +1377,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type CreateOrderMutationError = ErrorType<void>
 
     /**
- * @summary Place a new order (guest)
+ * @summary Place a new order (guest — no auth required)
  */
 export const useCreateOrder = <TError = ErrorType<void>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createOrder>>, TError,{data: BodyType<OrderInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
@@ -1389,6 +1390,83 @@ export const useCreateOrder = <TError = ErrorType<void>,
       return useMutation(getCreateOrderMutationOptions(options));
     }
 
+export const getTrackOrderUrl = (token: string,) => {
+
+
+
+
+  return `/api/orders/track/${token}`
+}
+
+/**
+ * @summary Track an order by UUID token (public — no auth, no PII in response)
+ */
+export const trackOrder = async (token: string, options?: RequestInit): Promise<PublicOrder> => {
+
+  return customFetch<PublicOrder>(getTrackOrderUrl(token),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getTrackOrderQueryKey = (token: string,) => {
+    return [
+    `/api/orders/track/${token}`
+    ] as const;
+    }
+
+
+export const getTrackOrderQueryOptions = <TData = Awaited<ReturnType<typeof trackOrder>>, TError = ErrorType<void>>(token: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof trackOrder>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getTrackOrderQueryKey(token);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof trackOrder>>> = ({ signal }) => trackOrder(token, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: token !== null && token !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof trackOrder>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type TrackOrderQueryResult = NonNullable<Awaited<ReturnType<typeof trackOrder>>>
+export type TrackOrderQueryError = ErrorType<void>
+
+
+/**
+ * @summary Track an order by UUID token (public — no auth, no PII in response)
+ */
+
+export function useTrackOrder<TData = Awaited<ReturnType<typeof trackOrder>>, TError = ErrorType<void>>(
+ token: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof trackOrder>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getTrackOrderQueryOptions(token,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
 export const getGetOrderUrl = (id: number,) => {
 
 
@@ -1398,7 +1476,7 @@ export const getGetOrderUrl = (id: number,) => {
 }
 
 /**
- * @summary Get an order by ID (for customer order tracking)
+ * @summary Get full order by ID (admin only)
  */
 export const getOrder = async (id: number, options?: RequestInit): Promise<Order> => {
 
@@ -1445,7 +1523,7 @@ export type GetOrderQueryError = ErrorType<void>
 
 
 /**
- * @summary Get an order by ID (for customer order tracking)
+ * @summary Get full order by ID (admin only)
  */
 
 export function useGetOrder<TData = Awaited<ReturnType<typeof getOrder>>, TError = ErrorType<void>>(
