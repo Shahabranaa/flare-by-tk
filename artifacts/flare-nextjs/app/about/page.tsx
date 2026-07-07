@@ -1,7 +1,7 @@
-import Image from 'next/image';
+import type { Metadata } from 'next';
 import { MapPin, Phone, Clock, Flame } from 'lucide-react';
 
-export const metadata = { title: 'About — Flare by TK' };
+export const metadata: Metadata = { title: 'About — Flare by TK' };
 
 export default function About() {
   return (

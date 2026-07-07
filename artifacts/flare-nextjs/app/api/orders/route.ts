@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
 import { randomUUID } from 'crypto';
 
+const VALID_ORDER_TYPES = ['delivery', 'pickup'] as const;
+
 export async function GET(req: NextRequest) {
   const cookie = req.cookies.get('admin-session');
   if (cookie?.value !== process.env.ADMIN_PASSWORD) {
@@ -33,8 +35,25 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { customerName, customerPhone, customerAddress, orderType, specialInstructions, items } = body;
 
-    if (!customerName || !customerPhone || !orderType || !items?.length) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    if (!customerName?.trim() || !customerPhone?.trim()) {
+      return NextResponse.json({ error: 'Name and phone are required' }, { status: 400 });
+    }
+    if (!VALID_ORDER_TYPES.includes(orderType)) {
+      return NextResponse.json({ error: 'orderType must be delivery or pickup' }, { status: 400 });
+    }
+    if (orderType === 'delivery' && !customerAddress?.trim()) {
+      return NextResponse.json({ error: 'Address is required for delivery' }, { status: 400 });
+    }
+    if (!Array.isArray(items) || items.length === 0) {
+      return NextResponse.json({ error: 'At least one item is required' }, { status: 400 });
+    }
+    for (const it of items) {
+      if (!Number.isInteger(it.menuItemId) || it.menuItemId < 1) {
+        return NextResponse.json({ error: 'Invalid menuItemId' }, { status: 400 });
+      }
+      if (!Number.isInteger(it.quantity) || it.quantity < 1) {
+        return NextResponse.json({ error: 'Item quantity must be at least 1' }, { status: 400 });
+      }
     }
 
     const menuIds = items.map((i: { menuItemId: number }) => i.menuItemId);
@@ -63,8 +82,8 @@ export async function POST(req: NextRequest) {
                           order_type, status, total_amount, special_instructions, items)
       VALUES ($1,$2,$3,$4,$5,'new',$6,$7,$8)
       RETURNING id, tracking_token AS "trackingToken", status, total_amount::float AS "totalAmount", created_at AS "createdAt"
-    `, [randomUUID(), customerName, customerPhone, customerAddress || null,
-        orderType, total.toString(), specialInstructions || null, JSON.stringify(enriched)]);
+    `, [randomUUID(), customerName.trim(), customerPhone.trim(), customerAddress?.trim() || null,
+        orderType, total.toString(), specialInstructions?.trim() || null, JSON.stringify(enriched)]);
 
     return NextResponse.json(row, { status: 201 });
   } catch (e) {

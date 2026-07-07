@@ -1,8 +1,9 @@
+import type { Metadata } from 'next';
 import { sql } from '@/lib/db';
 import Image from 'next/image';
 import { Flame, Tag } from 'lucide-react';
 
-export const metadata = { title: 'Deals — Flare by TK' };
+export const metadata: Metadata = { title: 'Deals — Flare by TK' };
 export const revalidate = 60;
 
 interface Deal {

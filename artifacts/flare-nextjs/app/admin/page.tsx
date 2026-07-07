@@ -1,8 +1,9 @@
+import type { Metadata } from 'next';
 import { cookies } from 'next/headers';
 import AdminClient from './client';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'Admin — Flare by TK' };
+export const metadata: Metadata = { title: 'Admin — Flare by TK' };
 
 export default async function AdminPage() {
   const cookieStore = await cookies();

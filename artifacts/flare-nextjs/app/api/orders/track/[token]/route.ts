@@ -4,6 +4,9 @@ import { sql } from '@/lib/db';
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ token: string }> }) {
   try {
     const { token } = await params;
+    if (!token || token.length < 10) {
+      return NextResponse.json({ error: 'Invalid token' }, { status: 400 });
+    }
     const [row] = await sql(`
       SELECT id, tracking_token AS "trackingToken", order_type AS "orderType",
              status, total_amount::float AS "totalAmount",

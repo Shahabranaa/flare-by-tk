@@ -1,0 +1,14 @@
+(()=>{var e={};e.id=96,e.ids=[96],e.modules={846:e=>{"use strict";e.exports=require("next/dist/compiled/next-server/app-page.runtime.prod.js")},3033:e=>{"use strict";e.exports=require("next/dist/server/app-render/work-unit-async-storage.external.js")},3295:e=>{"use strict";e.exports=require("next/dist/server/app-render/after-task-async-storage.external.js")},4870:e=>{"use strict";e.exports=require("next/dist/compiled/next-server/app-route.runtime.prod.js")},4939:e=>{"use strict";e.exports=import("pg")},6487:()=>{},6717:(e,t,r)=>{"use strict";r.a(e,async(e,a)=>{try{r.r(t),r.d(t,{GET:()=>o});var i=r(2190),s=r(7462),n=e([s]);async function o(e){let t=e.nextUrl.searchParams,r=t.get("available"),a=t.get("categoryId"),n=t.get("featured");try{let e=[],t=[];"true"===r&&(t.push(!0),e.push(`mi.is_available = $${t.length}`)),"true"===n&&(t.push(!0),e.push(`mi.is_featured = $${t.length}`)),a&&(t.push(parseInt(a)),e.push(`mi.category_id = $${t.length}`));let o=e.length?"WHERE "+e.join(" AND "):"",u=await (0,s.l)(`
+      SELECT mi.id, mi.name, mi.slug, mi.description,
+             mi.category_id AS "categoryId", c.name AS "categoryName",
+             mi.price::float AS price,
+             mi.original_price::float AS "originalPrice",
+             mi.image_url AS "imageUrl",
+             mi.is_available AS "isAvailable",
+             mi.is_featured AS "isFeatured",
+             mi.calories, mi.tags
+      FROM menu_items mi
+      LEFT JOIN categories c ON mi.category_id = c.id
+      ${o}
+      ORDER BY mi.category_id, mi.name
+    `,t);return i.NextResponse.json(u)}catch(e){return console.error(e),i.NextResponse.json({error:"Failed"},{status:500})}}s=(n.then?(await n)():n)[0],a()}catch(e){a(e)}})},7131:(e,t,r)=>{"use strict";r.a(e,async(e,a)=>{try{r.r(t),r.d(t,{patchFetch:()=>c,routeModule:()=>p,serverHooks:()=>d,workAsyncStorage:()=>l,workUnitAsyncStorage:()=>m});var i=r(6559),s=r(8088),n=r(7719),o=r(6717),u=e([o]);o=(u.then?(await u)():u)[0];let p=new i.AppRouteRouteModule({definition:{kind:s.RouteKind.APP_ROUTE,page:"/api/menu-items/route",pathname:"/api/menu-items",filename:"route",bundlePath:"app/api/menu-items/route"},resolvedPagePath:"/home/runner/workspace/artifacts/flare-nextjs/app/api/menu-items/route.ts",nextConfigOutput:"",userland:o}),{workAsyncStorage:l,workUnitAsyncStorage:m,serverHooks:d}=p;function c(){return(0,n.patchFetch)({workAsyncStorage:l,workUnitAsyncStorage:m})}a()}catch(e){a(e)}})},7462:(e,t,r)=>{"use strict";r.a(e,async(e,a)=>{try{r.d(t,{l:()=>n});var i=r(4939),s=e([i]);i=(s.then?(await s)():s)[0];let o=globalThis._pgPool??new i.Pool({connectionString:process.env.DATABASE_URL,max:5});async function n(e,t){let{rows:r}=await o.query(e,t);return r}a()}catch(e){a(e)}})},8335:()=>{},9294:e=>{"use strict";e.exports=require("next/dist/server/app-render/work-async-storage.external.js")}};var t=require("../../../webpack-runtime.js");t.C(e);var r=e=>t(t.s=e),a=t.X(0,[447,580],()=>r(7131));module.exports=a})();

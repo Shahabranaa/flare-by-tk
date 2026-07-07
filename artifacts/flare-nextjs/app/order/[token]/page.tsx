@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { use } from 'react';
 import { CheckCircle, Clock, ChefHat, Package, XCircle, Loader2, ArrowLeft } from 'lucide-react';
@@ -24,20 +24,20 @@ export default function OrderPage({ params }: { params: Promise<{ token: string 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  async function fetchOrder() {
+  const fetchOrder = useCallback(async () => {
     try {
       const res = await fetch(`/api/orders/track/${token}`);
       if (!res.ok) { setError('Order not found'); return; }
       setOrder(await res.json());
     } catch { setError('Failed to load order'); }
     finally { setLoading(false); }
-  }
+  }, [token]);
 
   useEffect(() => {
     fetchOrder();
-    const interval = setInterval(fetchOrder, 8000);
+    const interval = setInterval(fetchOrder, 5000);
     return () => clearInterval(interval);
-  }, [token]);
+  }, [fetchOrder]);
 
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center">
@@ -76,7 +76,6 @@ export default function OrderPage({ params }: { params: Promise<{ token: string 
         <p className="text-zinc-500 text-sm">Order #{order.id}</p>
       </div>
 
-      {/* Progress bar */}
       {order.status !== 'cancelled' && (
         <div className="flex items-center mb-8">
           {steps.map((s, i) => (
@@ -93,7 +92,6 @@ export default function OrderPage({ params }: { params: Promise<{ token: string 
         </div>
       )}
 
-      {/* Status badge */}
       <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full border text-sm font-semibold mb-6 ${cfg.bg} ${cfg.color}`}>
         <Icon className="h-4 w-4" />
         {cfg.label}
@@ -102,7 +100,6 @@ export default function OrderPage({ params }: { params: Promise<{ token: string 
         )}
       </div>
 
-      {/* Order details */}
       <div className="bg-zinc-900 rounded-2xl border border-zinc-800 p-5 mb-4">
         <div className="flex justify-between text-sm mb-4">
           <div>
@@ -134,7 +131,7 @@ export default function OrderPage({ params }: { params: Promise<{ token: string 
       </div>
 
       <p className="text-center text-zinc-600 text-xs">
-        This page refreshes automatically every 8 seconds.
+        This page refreshes automatically every 5 seconds.
       </p>
     </div>
   );
