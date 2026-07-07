@@ -1,9 +1,10 @@
-import { pgTable, text, serial, boolean, integer, timestamp, numeric, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, timestamp, numeric, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
 export const ordersTable = pgTable("orders", {
   id: serial("id").primaryKey(),
+  trackingToken: text("tracking_token").notNull().unique(),
   customerName: text("customer_name").notNull(),
   customerPhone: text("customer_phone").notNull(),
   customerAddress: text("customer_address"),

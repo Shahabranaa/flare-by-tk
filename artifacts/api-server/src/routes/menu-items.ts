@@ -1,7 +1,7 @@
 import { Router, type IRouter } from "express";
 import { eq, and } from "drizzle-orm";
 import { db, menuItemsTable, categoriesTable } from "@workspace/db";
-import { getAuth } from "@clerk/express";
+import { requireAdmin } from "../middlewares/requireAdmin";
 import {
   ListMenuItemsResponse,
   ListMenuItemsQueryParams,
@@ -16,16 +16,6 @@ import {
 } from "@workspace/api-zod";
 
 const router: IRouter = Router();
-
-function requireAdmin(req: any, res: any, next: any) {
-  const auth = getAuth(req);
-  const userId = auth?.sessionClaims?.userId || auth?.userId;
-  if (!userId) {
-    res.status(401).json({ error: "Unauthorized" });
-    return;
-  }
-  next();
-}
 
 function buildFilters(params: { categoryId?: number; featured?: boolean; available?: boolean }) {
   const conditions = [];

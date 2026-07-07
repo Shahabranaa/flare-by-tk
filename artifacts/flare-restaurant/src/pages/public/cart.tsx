@@ -86,9 +86,9 @@ export function Cart() {
         clearCart();
         toast({
           title: "Order Placed Successfully!",
-          description: `Your order #${order.id} is being processed.`,
+          description: `Your order is being processed.`,
         });
-        setLocation(`/order/${order.id}`);
+        setLocation(`/order/${order.trackingToken}`);
       },
       onError: () => {
         toast({

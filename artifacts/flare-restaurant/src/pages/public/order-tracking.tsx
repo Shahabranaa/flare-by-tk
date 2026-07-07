@@ -1,24 +1,38 @@
 import { useParams } from "wouter";
-import { useGetOrder } from "@workspace/api-client-react";
 import { FullPageLoader } from "@/components/ui/loading-spinner";
 import { CheckCircle2, Clock, ChefHat, CheckSquare, XCircle, ArrowLeft } from "lucide-react";
 import { Link } from "wouter";
+import { useQuery } from "@tanstack/react-query";
+
+interface PublicOrder {
+  id: number;
+  trackingToken: string;
+  orderType: string;
+  status: string;
+  totalAmount: number;
+  items: { menuItemId: number; name: string; price: number; quantity: number }[];
+  createdAt: string;
+  specialInstructions: string | null;
+}
+
+async function fetchOrderByToken(token: string): Promise<PublicOrder> {
+  const res = await fetch(`/api/orders/track/${token}`);
+  if (!res.ok) throw new Error("Order not found");
+  return res.json();
+}
 
 export function OrderTracking() {
-  const { id } = useParams<{ id: string }>();
-  const orderId = parseInt(id || "0", 10);
-  
-  const { data: order, isLoading } = useGetOrder(orderId, {
-    query: {
-      enabled: !!orderId,
-      refetchInterval: (query) => {
-        // Stop refetching if completed or cancelled
-        if (query.state.data?.status === "completed" || query.state.data?.status === "cancelled") {
-          return false;
-        }
-        return 5000; // Poll every 5 seconds
-      }
-    }
+  const { token } = useParams<{ token: string }>();
+
+  const { data: order, isLoading } = useQuery<PublicOrder>({
+    queryKey: ["order-track", token],
+    queryFn: () => fetchOrderByToken(token!),
+    enabled: !!token,
+    refetchInterval: (query) => {
+      const status = query.state.data?.status;
+      if (status === "completed" || status === "cancelled") return false;
+      return 5000;
+    },
   });
 
   if (isLoading) return <FullPageLoader />;
@@ -65,7 +79,7 @@ export function OrderTracking() {
 
       <div className="bg-card rounded-3xl border shadow-lg overflow-hidden">
         <div className="bg-primary/5 p-6 md:p-10 border-b text-center">
-          <h1 className="text-3xl font-heading font-black mb-2">Order #{order.id}</h1>
+          <h1 className="text-3xl font-heading font-black mb-2">Order Confirmed</h1>
           <p className="text-muted-foreground font-medium">
             Placed on {new Date(order.createdAt).toLocaleDateString()} at {new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
           </p>
@@ -82,21 +96,19 @@ export function OrderTracking() {
             <div className="mb-12">
               <div className="relative flex justify-between">
                 <div className="absolute top-6 left-0 right-0 h-1 bg-secondary rounded-full -z-10" />
-                <div 
-                  className="absolute top-6 left-0 h-1 bg-primary rounded-full -z-10 transition-all duration-500 ease-in-out" 
-                  style={{ width: `${(currentStep - 1) * 33.33}%` }} 
+                <div
+                  className="absolute top-6 left-0 h-1 bg-primary rounded-full -z-10 transition-all duration-500 ease-in-out"
+                  style={{ width: `${(currentStep - 1) * 33.33}%` }}
                 />
-                
                 {steps.map((step) => {
                   const Icon = step.icon;
                   const isActive = currentStep >= step.num;
                   const isCurrent = currentStep === step.num;
-                  
                   return (
                     <div key={step.num} className="flex flex-col items-center">
                       <div className={`w-12 h-12 rounded-full flex items-center justify-center transition-colors duration-300 ${
-                        isActive 
-                          ? "bg-primary text-primary-foreground shadow-lg shadow-primary/30" 
+                        isActive
+                          ? "bg-primary text-primary-foreground shadow-lg shadow-primary/30"
                           : "bg-secondary text-muted-foreground border-2 border-background"
                       } ${isCurrent ? "ring-4 ring-primary/20" : ""}`}>
                         <Icon className="h-5 w-5" />
@@ -111,68 +123,37 @@ export function OrderTracking() {
             </div>
           )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-            <div>
-              <h3 className="text-xl font-heading font-bold mb-4 pb-2 border-b">Order Details</h3>
-              <div className="space-y-4">
-                {order.items.map((item, index) => (
-                  <div key={index} className="flex justify-between items-center">
-                    <div className="flex items-center gap-3">
-                      <span className="bg-secondary text-foreground font-bold px-2 py-0.5 rounded text-sm">{item.quantity}x</span>
-                      <span className="font-medium">{item.name}</span>
-                    </div>
-                    <span className="font-bold">Rs. {item.price * item.quantity}</span>
+          <div>
+            <h3 className="text-xl font-heading font-bold mb-4 pb-2 border-b">Order Details</h3>
+            <div className="space-y-4">
+              {order.items.map((item, index) => (
+                <div key={index} className="flex justify-between items-center">
+                  <div className="flex items-center gap-3">
+                    <span className="bg-secondary text-foreground font-bold px-2 py-0.5 rounded text-sm">{item.quantity}x</span>
+                    <span className="font-medium">{item.name}</span>
                   </div>
-                ))}
-              </div>
-              
-              <div className="mt-6 pt-4 border-t space-y-2">
+                  <span className="font-bold">Rs. {item.price * item.quantity}</span>
+                </div>
+              ))}
+            </div>
+            <div className="mt-6 pt-4 border-t space-y-2">
+              {order.orderType === "delivery" && (
                 <div className="flex justify-between text-muted-foreground">
-                  <span>Subtotal</span>
-                  <span>Rs. {order.totalAmount - (order.orderType === "delivery" ? 150 : 0)}</span>
+                  <span>Delivery Fee</span>
+                  <span>Rs. 150</span>
                 </div>
-                {order.orderType === "delivery" && (
-                  <div className="flex justify-between text-muted-foreground">
-                    <span>Delivery Fee</span>
-                    <span>Rs. 150</span>
-                  </div>
-                )}
-                <div className="flex justify-between text-xl font-heading font-black pt-2">
-                  <span>Total</span>
-                  <span className="text-primary">Rs. {order.totalAmount}</span>
-                </div>
+              )}
+              <div className="flex justify-between text-xl font-heading font-black pt-2">
+                <span>Total</span>
+                <span className="text-primary">Rs. {order.totalAmount}</span>
               </div>
             </div>
-
-            <div className="bg-secondary/30 p-6 rounded-2xl border">
-              <h3 className="text-lg font-heading font-bold mb-4">Customer Info</h3>
-              <dl className="space-y-3 text-sm">
-                <div>
-                  <dt className="text-muted-foreground font-medium">Name</dt>
-                  <dd className="font-bold text-base">{order.customerName}</dd>
-                </div>
-                <div>
-                  <dt className="text-muted-foreground font-medium">Phone</dt>
-                  <dd className="font-bold text-base">{order.customerPhone}</dd>
-                </div>
-                <div>
-                  <dt className="text-muted-foreground font-medium">Type</dt>
-                  <dd className="font-bold text-base capitalize bg-primary/10 text-primary inline-block px-2 py-0.5 rounded mt-1">{order.orderType}</dd>
-                </div>
-                {order.customerAddress && (
-                  <div>
-                    <dt className="text-muted-foreground font-medium">Address</dt>
-                    <dd className="font-medium mt-1">{order.customerAddress}</dd>
-                  </div>
-                )}
-                {order.specialInstructions && (
-                  <div>
-                    <dt className="text-muted-foreground font-medium">Instructions</dt>
-                    <dd className="font-medium mt-1 italic">"{order.specialInstructions}"</dd>
-                  </div>
-                )}
-              </dl>
-            </div>
+            {order.specialInstructions && (
+              <div className="mt-6 p-4 bg-muted/30 rounded-xl border">
+                <p className="text-sm text-muted-foreground font-medium mb-1">Special Instructions</p>
+                <p className="font-medium italic">"{order.specialInstructions}"</p>
+              </div>
+            )}
           </div>
         </div>
       </div>

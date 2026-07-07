@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { ClerkProvider, SignIn, SignUp, Show, useClerk } from "@clerk/react";
+import { ClerkProvider, SignIn, useClerk } from "@clerk/react";
 import { publishableKeyFromHost } from "@clerk/react/internal";
 import { shadcn } from "@clerk/themes";
 import { Switch, Route, useLocation, Router as WouterRouter, Redirect } from "wouter";
@@ -89,15 +89,7 @@ const clerkAppearance = {
 function SignInPage() {
   return (
     <div className="flex min-h-[100dvh] items-center justify-center bg-muted/30 px-4">
-      <SignIn routing="path" path={`${basePath}/sign-in`} signUpUrl={`${basePath}/sign-up`} />
-    </div>
-  );
-}
-
-function SignUpPage() {
-  return (
-    <div className="flex min-h-[100dvh] items-center justify-center bg-muted/30 px-4">
-      <SignUp routing="path" path={`${basePath}/sign-up`} signInUrl={`${basePath}/sign-in`} />
+      <SignIn routing="path" path={`${basePath}/sign-in`} />
     </div>
   );
 }
@@ -141,7 +133,6 @@ function ClerkProviderWithRoutes() {
       proxyUrl={clerkProxyUrl}
       appearance={clerkAppearance}
       signInUrl={`${basePath}/sign-in`}
-      signUpUrl={`${basePath}/sign-up`}
       routerPush={(to) => setLocation(stripBase(to))}
       routerReplace={(to) => setLocation(stripBase(to), { replace: true })}
     >
@@ -154,11 +145,11 @@ function ClerkProviderWithRoutes() {
             <Route path="/menu/:itemSlug" component={() => <PublicRoute component={ItemDetail} />} />
             <Route path="/deals" component={() => <PublicRoute component={Deals} />} />
             <Route path="/cart" component={() => <PublicRoute component={Cart} />} />
-            <Route path="/order/:id" component={() => <PublicRoute component={OrderTracking} />} />
+            <Route path="/order/:token" component={() => <PublicRoute component={OrderTracking} />} />
             <Route path="/about" component={() => <PublicRoute component={About} />} />
 
             <Route path="/sign-in/*?" component={SignInPage} />
-            <Route path="/sign-up/*?" component={SignUpPage} />
+            <Route path="/sign-up/*?">{() => <Redirect to="/sign-in" />}</Route>
 
             <Route path="/admin">
               {() => <Redirect to="/admin/dashboard" />}

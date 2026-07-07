@@ -1,7 +1,9 @@
 import { Router, type IRouter } from "express";
-import { eq, desc, sql } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 import { db, ordersTable, menuItemsTable } from "@workspace/db";
-import { getAuth } from "@clerk/express";
+import { sql } from "drizzle-orm";
+import { requireAdmin } from "../middlewares/requireAdmin";
+import { randomUUID } from "crypto";
 import {
   ListOrdersResponse,
   ListOrdersQueryParams,
@@ -17,16 +19,6 @@ import {
 
 const router: IRouter = Router();
 
-function requireAdmin(req: any, res: any, next: any) {
-  const auth = getAuth(req);
-  const userId = auth?.sessionClaims?.userId || auth?.userId;
-  if (!userId) {
-    res.status(401).json({ error: "Unauthorized" });
-    return;
-  }
-  next();
-}
-
 function mapOrder(r: any) {
   return {
     ...r,
@@ -36,6 +28,22 @@ function mapOrder(r: any) {
   };
 }
 
+/** Strip PII for unauthenticated tracking responses */
+function mapOrderPublic(r: any) {
+  const full = mapOrder(r);
+  return {
+    id: full.id,
+    trackingToken: full.trackingToken,
+    orderType: full.orderType,
+    status: full.status,
+    totalAmount: full.totalAmount,
+    items: full.items,
+    createdAt: full.createdAt,
+    specialInstructions: full.specialInstructions ?? null,
+  };
+}
+
+// ── Admin: list all orders ──────────────────────────────────────────────────
 router.get("/orders", requireAdmin, async (req, res): Promise<void> => {
   const qp = ListOrdersQueryParams.safeParse({
     status: req.query.status,
@@ -44,14 +52,20 @@ router.get("/orders", requireAdmin, async (req, res): Promise<void> => {
 
   let rows;
   if (qp.success && qp.data.status) {
-    rows = await db.select().from(ordersTable).where(eq(ordersTable.status, qp.data.status)).orderBy(desc(ordersTable.createdAt)).limit(qp.data.limit ?? 100);
+    rows = await db.select().from(ordersTable)
+      .where(eq(ordersTable.status, qp.data.status))
+      .orderBy(desc(ordersTable.createdAt))
+      .limit(qp.data.limit ?? 100);
   } else {
-    rows = await db.select().from(ordersTable).orderBy(desc(ordersTable.createdAt)).limit(qp.success && qp.data.limit ? qp.data.limit : 100);
+    rows = await db.select().from(ordersTable)
+      .orderBy(desc(ordersTable.createdAt))
+      .limit(qp.success && qp.data.limit ? qp.data.limit : 100);
   }
 
   res.json(ListOrdersResponse.parse(rows.map(mapOrder)));
 });
 
+// ── Public: place an order ──────────────────────────────────────────────────
 router.post("/orders", async (req, res): Promise<void> => {
   const parsed = CreateOrderBody.safeParse(req.body);
   if (!parsed.success) {
@@ -61,7 +75,6 @@ router.post("/orders", async (req, res): Promise<void> => {
 
   const { items, ...orderData } = parsed.data;
 
-  // Fetch prices for each menu item
   const menuItemIds = items.map((i) => i.menuItemId);
   const menuItems = await db
     .select({ id: menuItemsTable.id, name: menuItemsTable.name, price: menuItemsTable.price })
@@ -86,6 +99,7 @@ router.post("/orders", async (req, res): Promise<void> => {
     .insert(ordersTable)
     .values({
       ...orderData,
+      trackingToken: randomUUID(),
       totalAmount: totalAmount.toString(),
       items: enrichedItems,
     })
@@ -94,7 +108,25 @@ router.post("/orders", async (req, res): Promise<void> => {
   res.status(201).json(CreateOrderResponse.parse(mapOrder(row)));
 });
 
-router.get("/orders/:id", async (req, res): Promise<void> => {
+// ── Public: track order by token (no PII exposed) ──────────────────────────
+router.get("/orders/track/:token", async (req, res): Promise<void> => {
+  const token = Array.isArray(req.params.token) ? req.params.token[0] : req.params.token;
+  if (!token || token.length < 10) {
+    res.status(400).json({ error: "Invalid tracking token" });
+    return;
+  }
+
+  const [row] = await db.select().from(ordersTable).where(eq(ordersTable.trackingToken, token));
+  if (!row) {
+    res.status(404).json({ error: "Order not found" });
+    return;
+  }
+
+  res.json(mapOrderPublic(row));
+});
+
+// ── Admin: get order by id ──────────────────────────────────────────────────
+router.get("/orders/:id", requireAdmin, async (req, res): Promise<void> => {
   const rawId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
   const params = GetOrderParams.safeParse({ id: parseInt(rawId, 10) });
   if (!params.success) {
@@ -111,6 +143,7 @@ router.get("/orders/:id", async (req, res): Promise<void> => {
   res.json(GetOrderResponse.parse(mapOrder(row)));
 });
 
+// ── Admin: update order status ──────────────────────────────────────────────
 router.patch("/orders/:id/status", requireAdmin, async (req, res): Promise<void> => {
   const rawId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
   const params = UpdateOrderStatusParams.safeParse({ id: parseInt(rawId, 10) });
@@ -139,7 +172,7 @@ router.patch("/orders/:id/status", requireAdmin, async (req, res): Promise<void>
   res.json(UpdateOrderStatusResponse.parse(mapOrder(row)));
 });
 
-// Admin dashboard
+// ── Admin: dashboard summary ────────────────────────────────────────────────
 router.get("/admin/dashboard", requireAdmin, async (req, res): Promise<void> => {
   const today = new Date();
   today.setHours(0, 0, 0, 0);

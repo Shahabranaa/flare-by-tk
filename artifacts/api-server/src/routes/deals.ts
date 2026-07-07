@@ -1,7 +1,7 @@
 import { Router, type IRouter } from "express";
 import { eq } from "drizzle-orm";
 import { db, dealsTable } from "@workspace/db";
-import { getAuth } from "@clerk/express";
+import { requireAdmin } from "../middlewares/requireAdmin";
 import {
   ListDealsResponse,
   ListDealsQueryParams,
@@ -16,16 +16,6 @@ import {
 } from "@workspace/api-zod";
 
 const router: IRouter = Router();
-
-function requireAdmin(req: any, res: any, next: any) {
-  const auth = getAuth(req);
-  const userId = auth?.sessionClaims?.userId || auth?.userId;
-  if (!userId) {
-    res.status(401).json({ error: "Unauthorized" });
-    return;
-  }
-  next();
-}
 
 function mapDeal(r: any) {
   return {
@@ -42,14 +32,13 @@ router.get("/deals", async (req, res): Promise<void> => {
     active: req.query.active !== undefined ? req.query.active === "true" : undefined,
   });
 
-  let query = db.select().from(dealsTable);
   if (qp.success && qp.data.active != null) {
     const rows = await db.select().from(dealsTable).where(eq(dealsTable.isActive, qp.data.active)).orderBy(dealsTable.sortOrder);
     res.json(ListDealsResponse.parse(rows.map(mapDeal)));
     return;
   }
 
-  const rows = await query.orderBy(dealsTable.sortOrder);
+  const rows = await db.select().from(dealsTable).orderBy(dealsTable.sortOrder);
   res.json(ListDealsResponse.parse(rows.map(mapDeal)));
 });
 
