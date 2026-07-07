@@ -3,9 +3,6 @@
   "outputDirectory": "artifacts/flare-restaurant/dist/public",
   "framework": null,
   "rewrites": [
-    {
-      "source": "/api/:path*",
-      "destination": "https://59d02c27-0dcc-4fe9-b7cd-2514394ccdaa-00-28mvrnz7hnv47.sisko.replit.dev/api/:path*"
-    }
+    { "source": "/api/:path*", "destination": "/api/index" }
   ]
 }
